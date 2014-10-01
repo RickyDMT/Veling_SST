@@ -9,6 +9,8 @@ answer=inputdlg(prompt,'Please input subject info',1,defAns);
 
 ID=str2double(answer{1});
 
+%Get condition assignment
+
 rng(ID); %Seed random number generator with subject ID
 
 KEY = struct;
@@ -17,7 +19,7 @@ KEY.rt = KbName('SPACE'); %To end random trial selection
 % KEY.two = KbName('2@'); 
 % KEY.tres = KbName('3#');
 % KEY.four = KbName('4$'); 
-% KEY.five = KbName('5%'); 
+% KEY.five = KbName('5%');
 % KEY.six = KbName('6^');
 % KEY.sev = KbName('7&'); 
 % KEY.eight = KbName('8*'); 
@@ -43,6 +45,9 @@ STIM.trials = 32;
 STIM.trialdur = 1.250;
 
 % Load in pics
+%This will be based off of condition: Control = bird, flowers, etc.
+%Modulate based off of condition assignment
+%Change PICS.in.XXXX to more bland names (Go, NoGo, Neut)
 PICS =struct;
 PICS.in.good = dir('*good.jpg');
 PICS.in.bad = dir('*bad.jpg');
@@ -57,6 +62,7 @@ gonogoh20 = BalanceTrials(sum(trial_types==3),1,[0 1]);
 gonogo = [gonogo; gonogoh20];
 %When appropriate pics are found, update these to randperm(length(Pics.in.good),14) where '14' is # of desired pics of each type per block
 %NEEDS QUESTION ANSWERED: All pics once, or all pics randomly (sample w/replacement)
+%ELK 9/30/14: All pics will be displayed once!
 piclist = [randperm(length(PICS.in.good)) randperm(length(PICS.in.good))];
 piclist = [piclist randperm(length(PICS.in.bad)) randperm(length(PICS.in.bad))];
 piclist = [piclist randperm(length(PICS.in.h2o))]';
@@ -121,20 +127,20 @@ KbName('UnifyKeyNames');
 %% Set frame size;
 STIM.framerect = [XCENTER-330; YCENTER-330; XCENTER+330; YCENTER+330];
 
-%moved to block by block input; will be based on pre-determined, random
-%selection of images.
-for n = 1:length(picsfields);
-    curr_field = picsfields{n};
-    PICS.out.(curr_field).raw = [];
-    PICS.out.(curr_field).texture = [];
-    for g = 1:length(PICS.in.(curr_field));
-        %Load in raw with imread
-        PICS.out.(curr_field)(g).raw = imread(getfield(PICS,'in',curr_field,{g},'name'));
-        %Draw with MakeTexture
-        %IS THIS TOO HEAVY?
-        PICS.out.(curr_field)(g).texture = Screen('MakeTexture',w,PICS.out.(curr_field)(g).raw);
-    end
-end
+% %moved to block by block input; will be based on pre-determined, random
+% %selection of images.
+% for n = 1:length(picsfields);
+%     curr_field = picsfields{n};
+%     PICS.out.(curr_field).raw = [];
+%     PICS.out.(curr_field).texture = [];
+%     for g = 1:length(PICS.in.(curr_field));
+%         %Load in raw with imread
+%         PICS.out.(curr_field)(g).raw = imread(getfield(PICS,'in',curr_field,{g},'name'));
+%         %Draw with MakeTexture
+%         %IS THIS TOO HEAVY?
+%         PICS.out.(curr_field)(g).texture = Screen('MakeTexture',w,PICS.out.(curr_field)(g).raw);
+%     end
+% end
 
 
 %% Initial screen
@@ -142,7 +148,7 @@ DrawFormattedText(w,'The stop signal task is about to begin.\nPress any key to c
 Screen('Flip',w);
 KbWait();
 Screen('Flip',w);
-WaitSecs(1);
+WaitSecs(.5);
 
 %% Instructions
 DrawFormattedText(w,'You see pictures with either a blue or gray border around them.\nPlease the press the space bar as quickly & accurately as you can\nBUT only if you see a BLUE bar around the image.\nDo not press if you see a gray bar.\nPress any key to continue.','center','center',COLORS.WHITE,300);
@@ -203,18 +209,18 @@ global w STIM PICS COLORS SST KEY
             trial_rt = GetSecs() - RT_start;
             
             Screen('DrawTexture',w,PICS.out(trial).texture);
-            old = Screen('TextSize',w,40);
+            old = Screen('TextSize',w,60);
             if SST.var.GoNoGo(trial,block) == 0;
                 Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
                 DrawFormattedText(w,'X','center','center',COLORS.RED);
+                Screen('TextSize',w,old);
                 correct = 0;
             else
-                Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
-                DrawFormattedText(w,'+','center','center',COLORS.GREEN);
+%                 Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
+%                 DrawFormattedText(w,'+','center','center',COLORS.GREEN);
                 correct = 1;
             end
             Screen('Flip',w');
-            Screen('TextSize',w,old);
             WaitSecs(.5);
             break;
         end
@@ -225,12 +231,12 @@ global w STIM PICS COLORS SST KEY
         
         if SST.var.GoNoGo(trial,block) == 0;
             Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
-            DrawFormattedText(w,'+','center','center',COLORS.GREEN);
+%             DrawFormattedText(w,'+','center','center',COLORS.GREEN);
             Screen('Flip',w);
             correct = 1;
         else
             Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
-            DrawFormattedText(w,'Please Click Faster','center','center',COLORS.RED);
+            DrawFormattedText(w,'X','center','center',COLORS.RED);
             Screen('Flip',w);
             correct = 0;
         end
