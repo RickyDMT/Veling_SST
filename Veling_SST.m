@@ -1,4 +1,8 @@
 function Veling_SST(varargin)
+% Developed by ELK based on Veling et al., 2014
+% Contact: elk@uoregon.edu
+% Download latest version at: github.com/RickyDMT/Veling_SST
+
 
 global KEY COLORS w wRect XCENTER YCENTER PICS STIM SST trial
 
@@ -11,6 +15,8 @@ ID=str2double(answer{1});
 COND = str2double(answer{2});
 SESS = str2double(answer{3});
 
+file_check = sprintf('SST_%d_%d.mat',ID,SESS);
+
 %Make sure input data makes sense.
 % try
 %     if SESS > 1;
@@ -20,6 +26,11 @@ SESS = str2double(answer{3});
 % catch
 %     error('Subject ID & Condition code do not match.');
 % end
+
+%Make sure not over-writing file.
+if exist(file_check,'file') == 2;
+    error('File already exists. Please double-check and/or re-enter participant data.');
+end
 
 
 rng(ID); %Seed random number generator with subject ID
@@ -95,7 +106,7 @@ commandwindow;
 
 %%
 %change this to 0 to fill whole screen
-DEBUG=0;
+DEBUG=1;
 
 %set up the screen and dimensions
 
@@ -184,30 +195,72 @@ for block = 1:STIM.blocks;
         Screen('Flip',w);
         WaitSecs(.5);
     end
-    %Inter-block info here, re: Display RT, accuracy, etc.
-    %Calculate block RT
-    c = SST.data.correct(:,block) == 1;
-    corr_count = sprintf('Block %d Number Correct:\t%d',block,length(find(c)));
-    block_go = SST.var.GoNoGo(:,block) == 1;
+    %Inter-block info here, re: Display accuracy & RT.
+    Screen('Flip',w);   %clear screen first.
+    
+    block_text = sprintf('Block %d Results',block);
+    
+    c = SST.data.correct(:,block) == 1;                                 %Find correct trials
+    corr_count = sprintf('Number Correct:\t%d of 32',length(find(c)));  %Number correct = length of find(c)
+    corr_per = length(find(c))*100/length(c);                           %Percent correct = length find(c) / total trials
+    corr_pert = sprintf('Percent Correct:\t%4.1f%%',corr_per);          %sprintf that data to string.
+    
     if isempty(c(c==1))
         %Don't try to calculate avg RT, they got them all wrong (WTF?)
         %Display "N/A" for this block's RT.
-        ibt_rt = sprintf('Block %d Average RT:\tN/A',block);
+        ibt_rt = sprintf('Average RT:\tUnable to calculate RT due to 0 correct trials.');
     else
-        blockrts = SST.data.rt(:,block);
-        blockrts = blockrts(c & block_go);
-        avg_rt_block = mean(blockrts)*100;
-        ibt_rt = sprintf('Block %d, Average RT:\t%0.3f',block,avg_rt_block);
+        block_go = SST.var.GoNoGo(:,block) == 1;                        %Find go trials
+        blockrts = SST.data.rt(:,block);                                %Pull all RT data
+        blockrts = blockrts(c & block_go);                              %Resample RT only if go & correct.
+        avg_rt_block = fix(mean(blockrts)*1000);                        %Display avg rt in milliseconds.
+        ibt_rt = sprintf('Average RT:\t\t\t%3d milliseconds',avg_rt_block);
     end
     
-    DrawFormattedText(w,corr_count,10,10,COLORS.WHITE);
-    DrawFormattedText(w,ibt_rt,10,10,COLORS.WHITE);
+    ibt_xdim = wRect(3)/10;
+    ibt_ydim = wRect(4)/4;
+    old = Screen('TextSize',w,25);
+    DrawFormattedText(w,block_text,'center',wRect(4)/10,COLORS.WHITE);   %Next lines display all the data.
+    DrawFormattedText(w,corr_count,ibt_xdim,ibt_ydim,COLORS.WHITE);
+    DrawFormattedText(w,corr_pert,ibt_xdim,ibt_ydim+30,COLORS.WHITE);    
+    DrawFormattedText(w,ibt_rt,ibt_xdim,ibt_ydim+60,COLORS.WHITE);
+    %Screen('Flip',w);
     
     if block > 1
         % Also display rest of block data summary
+        tot_trial = block * 32;
+        totes_c = SST.data.correct == 1;
+        corr_count_totes = sprintf('Number Correct: \t%d of %d',length(find(totes_c)),tot_trial);
+        corr_per_totes = length(find(totes_c))*100/tot_trial;
+        corr_pert_totes = sprintf('Percent Correct:\t%4.1f%%',corr_per_totes);
+        
+        if isempty(totes_c(totes_c ==1))
+            %Don't try to calculate RT, they have missed EVERY SINGLE GO
+            %TRIAL! 
+            %Stop task & alert experimenter?
+            tot_rt = sprintf('Block %d Average RT:\tUnable to calculate RT due to 0 correct trials.',block);
+        else
+            tot_go = SST.var.GoNoGo == 1;
+            totrts = SST.data.rt;
+            totrts = totrts(totes_c & tot_go);
+            avg_rt_tote = fix(mean(totrts)*1000);     %Display in units of milliseconds.
+            tot_rt = sprintf('Average RT:\t\t\t%3d milliseconds',avg_rt_tote);
+        end
+        
+        DrawFormattedText(w,'Total Results','center',ibt_ydim+120,COLORS.WHITE);
+        DrawFormattedText(w,corr_count_totes,ibt_xdim,ibt_ydim+150,COLORS.WHITE);
+        DrawFormattedText(w,corr_pert_totes,ibt_xdim,ibt_ydim+180,COLORS.WHITE);
+        DrawFormattedText(w,tot_rt,ibt_xdim,ibt_ydim+210,COLORS.WHITE);
+        %Screen('Flip',w);
     end
     
+    Screen('Flip',w,[],1);
+    WaitSecs(5);
+    DrawFormattedText(w,'Press any key to continue.','center',wRect(4)*9/10,COLORS.WHITE);
     Screen('Flip',w);
+    KbWait();
+    Screen('TextSize',w,old);
+    
         
     
 end
@@ -215,28 +268,23 @@ end
 %% Save all the data
 
 %Export pro.DMT to text and save with subject number.
-%find the mfilesdir by figuring out where show_faces.m is kept
-[mfilesdir,~,~] = fileparts(which('Veling_SST.m'));
-
-%get the parent directory, which is one level up from mfilesdir
-[parentdir,~,~] =fileparts(mfilesdir);
-
-
-%create the paths to the other directories, starting from the parent
-%directory
-% savedir = [parentdir filesep 'Results\proDMT\'];
-savedir = [parentdir filesep 'Results' filesep];
-
-save([savedir 'SST_' num2str(ID) '_' num2str(SESS) '.mat'],'SST');
-
-DrawFormattedText(w,'Thank you for participating\n in this part of the study!','center','center',COLORS.WHITE);
-Screen('Flip', w);
-
-if w~=w2
+%find the mfilesdir by figuring out where Veling_SST.m is kept
+try
+    [mfilesdir,~,~] = fileparts(which('Veling_SST.m'));
     
-    DrawFormattedText(w2,'Thank you for participating\n in this part of the study!','center','center',COLORS.WHITE);
-    Screen('Flip', w2);
+    %get the parent directory, which is one level up from mfilesdir
+    [parentdir,~,~] =fileparts(mfilesdir);
     
+    
+    %create the paths to the other directories, starting from the parent
+    %directory
+    % savedir = [parentdir filesep 'Results\proDMT\'];
+    savedir = [parentdir filesep 'Results' filesep];
+    
+    save([savedir 'SST_' num2str(ID) '_' num2str(SESS) '.mat'],'SST');
+
+catch
+    error('Although data was (most likely) collected, file was not properly saved. 1. Right click on variable in right-hand side of screen. 2. Save as SST_#_#.mat where first # is participant ID and second is session #. If you are still unsure what to do, contact your boss, Kim Martin, or Erik Knight (elk@uoregon.edu).')
 end
 
 sca
