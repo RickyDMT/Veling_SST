@@ -56,40 +56,52 @@ STIM.blocks = 8;
 STIM.trials = 32;
 STIM.trialdur = 1.250;
 
-% Load in pics
+%% Find and load pics
+[imgdir,~,~] = fileparts(which('Lawrence_GoNoGo.m'));
+
+try
+    cd([imgdir filesep 'IMAGES'])
+catch
+    error('Could not find and/or open the IMAGES folder.');
+end
 
 PICS =struct;
 if COND == 1;                   %Condtion = 1 is food. 
-    PICS.in.go = dir('*good.jpg');
-    PICS.in.no = dir('*bad.jpg');
-    PICS.in.neut = dir('*water.jpg');
+    PICS.in.go = dir('good*.jpg');
+    PICS.in.no = dir('*bad*.jpg');
+    PICS.in.neut = dir('*water*.jpg');
 elseif COND == 2;               %Condition = 2 is not food (birds/flowers)
-    PICS.in.go = dir('*bird.jpg');
-    PICS.in.no = dir('*flowers.jpg');
-    PICS.in.neut = dir('*mam.jpg');
+    PICS.in.go = dir('*bird*.jpg');
+    PICS.in.no = dir('*flowers*.jpg');
+    PICS.in.neut = dir('*mam*.jpg');
 end
-picsfields = fieldnames(PICS.in);
+% picsfields = fieldnames(PICS.in);
 
+%Check if pictures are present. If not, throw error.
+%Could be updated to search computer to look for pics...
+if isempty(PICS.in.go) || isempty(PICS.in.no) || isempty(PICS.in.neut)
+    error('Could not find pics. Please ensure pictures are found in a folder names IMAGES within the folder containing the .m task file.');
+end
+
+%% Set up trials and other stimulus parameters
 SST = struct;
 
-trial_types = [ones(14,1); repmat(2,14,1); repmat(3,4,1)];  %1 = go; 2 = no; 3 = neutral/variable
-gonogo = [ones(14,1); zeros(14,1)];                         %1 = go; 0 = nogo;
-gonogoh20 = BalanceTrials(sum(trial_types==3),1,[0 1]);
+trial_types = [ones(length(PICS.in.go),1); repmat(2,length(PICS.in.no),1); repmat(3,length(PICS.in.neut),1)];  %1 = go; 2 = no; 3 = neutral/variable
+gonogo = [ones(length(PICS.in.go),1); zeros(length(PICS.in.go),1)];                         %1 = go; 0 = nogo;
+gonogoh20 = BalanceTrials(sum(trial_types==3),1,[0 1]);     %For neutral, go & no go are randomized
 gonogo = [gonogo; gonogoh20];
-%When appropriate pics are found, update these to
-%randperm(length(Pics.in.go)) to make a long list of all the pic numbers
-%randomized.
-%Elk: Using all pics once per session (randomized across blocks)
-piclist = [randperm(length(PICS.in.go)) randperm(length(PICS.in.go))];
-piclist = [piclist randperm(length(PICS.in.no)) randperm(length(PICS.in.no))];
-piclist = [piclist randperm(length(PICS.in.neut))]';
+
+%Make long list of #s to represent each pic
+piclist = [1:length(PICS.in.go) 1:length(PICS.in.no) 1:length(PICS.in.neut)]';
 trial_types = [trial_types gonogo piclist];
+shuffled = trial_types(randperm(size(trial_types,1)),:);
 
 for g = 1:STIM.blocks;
-    shuffled = trial_types(randperm(size(trial_types,1)),:);
-    SST.var.trial_type(1:STIM.trials,g) = shuffled(:,1);
-    SST.var.picnum(1:STIM.trials,g) = shuffled(:,3);
-    SST.var.GoNoGo(1:STIM.trials,g) = shuffled(:,2);
+    row = ((g-1)*STIM.trials)+1;
+    rend = row+STIM.trials - 1;
+    SST.var.trial_type(1:STIM.trials,g) = shuffled(row:rend,1);
+    SST.var.picnum(1:STIM.trials,g) = shuffled(row:rend,3);
+    SST.var.GoNoGo(1:STIM.trials,g) = shuffled(row:rend,2);
 end
 
     SST.data.rt = zeros(STIM.trials, STIM.blocks);
@@ -151,21 +163,6 @@ KbName('UnifyKeyNames');
 %% Set frame size;
 STIM.framerect = [XCENTER-330; YCENTER-330; XCENTER+330; YCENTER+330];
 
-%moved to block by block input; will be based on pre-determined, random
-%selection of images.
-% for n = 1:length(picsfields);
-%     curr_field = picsfields{n};
-%     PICS.out.(curr_field).raw = [];
-%     PICS.out.(curr_field).texture = [];
-%     for g = 1:length(PICS.in.(curr_field));
-%         %Load in raw with imread
-%         PICS.out.(curr_field)(g).raw = imread(getfield(PICS,'in',curr_field,{g},'name'));
-%         %Draw with MakeTexture
-%         %IS THIS TOO HEAVY?
-%         PICS.out.(curr_field)(g).texture = Screen('MakeTexture',w,PICS.out.(curr_field)(g).raw);
-%     end
-% end
-
 
 %% Initial screen
 DrawFormattedText(w,'The stop signal task is about to begin.\nPress any key to continue.','center','center',COLORS.WHITE);
@@ -188,13 +185,15 @@ for block = 1:STIM.blocks;
     DrawFormattedText(w,ibt,'center','center',COLORS.WHITE);
     Screen('Flip',w);
     KbWait();
-    
+
+    old = Screen('TextSize',w,40);
     for trial = 1:STIM.trials;
         [SST.data.rt(trial,block), SST.data.correct(trial,block)] = DoPicSST(trial,block);
         %Wait 500 ms
         Screen('Flip',w);
         WaitSecs(.5);
     end
+    Screen('TextSize',w,old);
     %Inter-block info here, re: Display accuracy & RT.
     Screen('Flip',w);   %clear screen first.
     
@@ -299,7 +298,7 @@ function [trial_rt, correct] = DoPicSST(trial,block,varargin)
 global w STIM PICS COLORS SST KEY
 
 %while telap <= STIM.trialdur
-    Screen('DrawTexture',w,PICS.out(trial).texture); %x must be pointer to image.
+    Screen('DrawTexture',w,PICS.out(trial).texture);
 %     telap = toc(tstart);
     Screen('Flip',w); 
     
@@ -322,7 +321,7 @@ global w STIM PICS COLORS SST KEY
             trial_rt = GetSecs() - RT_start;
             
             Screen('DrawTexture',w,PICS.out(trial).texture);
-            old = Screen('TextSize',w,40);
+%             old = Screen('TextSize',w,40);
             if SST.var.GoNoGo(trial,block) == 0;
                 Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
                 DrawFormattedText(w,'X','center','center',COLORS.RED);
@@ -333,19 +332,17 @@ global w STIM PICS COLORS SST KEY
                 correct = 1;
             end
             Screen('Flip',w');
-            Screen('TextSize',w,old);
+%             Screen('TextSize',w,old);
             WaitSecs(.5);
             break;
         end
     end
     
     if correct == -999;
-        Screen('DrawTexture',w,PICS.out(trial).texture);
+%         Screen('DrawTexture',w,PICS.out(trial).texture);
         
-        if SST.var.GoNoGo(trial,block) == 0;
-            Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
-%             DrawFormattedText(w,'+','center','center',COLORS.GREEN);
-            Screen('Flip',w);
+        if SST.var.GoNoGo(trial,block) == 0;    %If NoGo & Correct no press, do nothing & move to inter-trial black screen
+            Screen('Flip',w);                   %'Flip in order to clear buffer; next 'flip' (in main script) flips to black screen.
             correct = 1;
         else
             Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
@@ -353,8 +350,8 @@ global w STIM PICS COLORS SST KEY
             DrawFormattedText(w,'X','center','center',COLORS.RED);
             Screen('Flip',w);
             correct = 0;
+            WaitSecs(.5);
         end
-        WaitSecs(.5);
         trial_rt = -999;
     end
     
