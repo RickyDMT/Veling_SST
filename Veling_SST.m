@@ -53,7 +53,7 @@ COLORS.NO = [192 192 192]';     %color of no rectangle
 
 STIM = struct;
 STIM.blocks = 8;
-STIM.trials = 32;
+STIM.trials = 25;
 STIM.trialdur = 1.250;
 
 %% Find and load pics
@@ -118,7 +118,7 @@ commandwindow;
 
 %%
 %change this to 0 to fill whole screen
-DEBUG=1;
+DEBUG=0;
 
 %set up the screen and dimensions
 
@@ -136,7 +136,7 @@ if DEBUG==1;
     YCENTER=240;
 else
     %change screen resolution
-    Screen('Resolution',0,1024,768,[],32);
+%    Screen('Resolution',0,1024,768,[],32); %This throws error on Macbook Air. Test again on PCs?
     
     %this gives the x and y dimensions of our screen, in pixels.
     [swidth, sheight] = Screen('WindowSize', screenNumber);
@@ -156,7 +156,7 @@ end
 %you can set the font sizes and styles here
 Screen('TextFont', w, 'Arial');
 %Screen('TextStyle', w, 1);
-Screen('TextSize',w,20);
+Screen('TextSize',w,40);
 
 KbName('UnifyKeyNames');
 
@@ -186,7 +186,7 @@ for block = 1:STIM.blocks;
     Screen('Flip',w);
     KbWait();
 
-    old = Screen('TextSize',w,40);
+    old = Screen('TextSize',w,80);
     for trial = 1:STIM.trials;
         [SST.data.rt(trial,block), SST.data.correct(trial,block)] = DoPicSST(trial,block);
         %Wait 500 ms
@@ -200,7 +200,7 @@ for block = 1:STIM.blocks;
     block_text = sprintf('Block %d Results',block);
     
     c = SST.data.correct(:,block) == 1;                                 %Find correct trials
-    corr_count = sprintf('Number Correct:\t%d of 32',length(find(c)));  %Number correct = length of find(c)
+    corr_count = sprintf('Number Correct:\t%d of %d',length(find(c)),STIM.trials);  %Number correct = length of find(c)
     corr_per = length(find(c))*100/length(c);                           %Percent correct = length find(c) / total trials
     corr_pert = sprintf('Percent Correct:\t%4.1f%%',corr_per);          %sprintf that data to string.
     
@@ -212,8 +212,8 @@ for block = 1:STIM.blocks;
         block_go = SST.var.GoNoGo(:,block) == 1;                        %Find go trials
         blockrts = SST.data.rt(:,block);                                %Pull all RT data
         blockrts = blockrts(c & block_go);                              %Resample RT only if go & correct.
-        avg_rt_block = fix(mean(blockrts)*1000);                        %Display avg rt in milliseconds.
-        ibt_rt = sprintf('Average RT:\t\t\t%3d milliseconds',avg_rt_block);
+        SST.data.avg_rt(block) = fix(mean(blockrts)*1000);                        %Display avg rt in milliseconds.
+        ibt_rt = sprintf('Average RT:\t\t\t%3d milliseconds',SST.data.avg_rt(block));
     end
     
     ibt_xdim = wRect(3)/10;
@@ -227,7 +227,7 @@ for block = 1:STIM.blocks;
     
     if block > 1
         % Also display rest of block data summary
-        tot_trial = block * 32;
+        tot_trial = block * STIM.trials;
         totes_c = SST.data.correct == 1;
         corr_count_totes = sprintf('Number Correct: \t%d of %d',length(find(totes_c)),tot_trial);
         corr_per_totes = length(find(totes_c))*100/tot_trial;
@@ -268,23 +268,30 @@ end
 
 %Export pro.DMT to text and save with subject number.
 %find the mfilesdir by figuring out where Veling_SST.m is kept
+[mfilesdir,~,~] = fileparts(which('Veling_SST.m'));
+
+%get the parent directory, which is one level up from mfilesdir
+%[parentdir,~,~] =fileparts(mfilesdir);
+savedir = [mfilesdir filesep 'Results' filesep];
+
+if exist(savedir,'dir') == 0;
+    % If savedir (the directory to save files in) does not exist, make it.
+    mkdir(savedir);
+end
+    
 try
-    [mfilesdir,~,~] = fileparts(which('Veling_SST.m'));
-    
-    %get the parent directory, which is one level up from mfilesdir
-    [parentdir,~,~] =fileparts(mfilesdir);
-    
     
     %create the paths to the other directories, starting from the parent
     %directory
     % savedir = [parentdir filesep 'Results\proDMT\'];
-    savedir = [parentdir filesep 'Results' filesep];
+    %         savedir = [mfilesdir filesep 'Results' filesep];
     
     save([savedir 'SST_' num2str(ID) '_' num2str(SESS) '.mat'],'SST');
-
+    
 catch
     error('Although data was (most likely) collected, file was not properly saved. 1. Right click on variable in right-hand side of screen. 2. Save as SST_#_#.mat where first # is participant ID and second is session #. If you are still unsure what to do, contact your boss, Kim Martin, or Erik Knight (elk@uoregon.edu).')
 end
+
 
 sca
 
