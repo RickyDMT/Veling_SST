@@ -176,15 +176,61 @@ DrawFormattedText(w,'You will see pictures with either a blue or gray border aro
 Screen('Flip',w);
 KbWait();
 
+%% Practice
+    
+DrawFormattedText(w,' First, let''s practice.\n\nPress any key to continue.','center','center',COLORS.WHITE);
+Screen('Flip',w);
+KbWait([],2);
+
+practpic = imread(getfield(PICS,'in','neut',{1},'name'));
+practpic = Screen('MakeTexture',w,practpic);
+
+%GO PRACTICE
+Screen('DrawTexture',w,practpic);
+Screen('Flip',w);
+WaitSecs(.1);
+
+Screen('DrawTexture',w,practpic);
+Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
+DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.','center',YCENTER+400,COLORS.WHITE);
+Screen('Flip',w);
+WaitSecs(5);
+
+Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
+Screen('DrawTexture',w,practpic);
+DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.\n\nPress the space bar to continue.','center',YCENTER+400,COLORS.WHITE);
+Screen('Flip',w);
+KbWait([],2);
+
+%NO GO PRACTICE
+Screen('DrawTexture',w,practpic);
+Screen('Flip',w);
+WaitSecs(.1);
+
+Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
+Screen('DrawTexture',w,practpic);
+DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.','center',YCENTER+400,COLORS.WHITE);
+Screen('Flip',w);
+WaitSecs(5);
+
+Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
+Screen('DrawTexture',w,practpic);
+DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.\n\nPress enter to continue.','center',YCENTER+400,COLORS.WHITE);
+Screen('Flip',w);
+KbWait([],2);
+
+
+
+
 %% Task
 
 for block = 1:STIM.blocks;
     %Load pics block by block.
     DrawPics4Block(block);
-    ibt = sprintf('Prepare for Block %d',block);
+    ibt = sprintf('Prepare for Block %d.\n\nPress enter to begin.',block);
     DrawFormattedText(w,ibt,'center','center',COLORS.WHITE);
     Screen('Flip',w);
-    KbWait();
+    KbWait([],2);
 
     old = Screen('TextSize',w,80);
     for trial = 1:STIM.trials;
@@ -266,7 +312,7 @@ end
 
 %% Save all the data
 
-%Export pro.DMT to text and save with subject number.
+%Export SST to text and save with subject number.
 %find the mfilesdir by figuring out where Veling_SST.m is kept
 [mfilesdir,~,~] = fileparts(which('Veling_SST.m'));
 
@@ -292,6 +338,9 @@ catch
     error('Although data was (most likely) collected, file was not properly saved. 1. Right click on variable in right-hand side of screen. 2. Save as SST_#_#.mat where first # is participant ID and second is session #. If you are still unsure what to do, contact your boss, Kim Martin, or Erik Knight (elk@uoregon.edu).')
 end
 
+DrawFormattedText(w,'Thank you for participating\n in this part of the study!','center','center',COLORS.WHITE);
+Screen('Flip', w);
+KbWait();
 
 sca
 
