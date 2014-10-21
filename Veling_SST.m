@@ -172,12 +172,14 @@ Screen('Flip',w);
 WaitSecs(1);
 
 %% Instructions
-DrawFormattedText(w,'You will see pictures with either a blue or gray border around them.\nPlease the press the space bar as quickly & accurately as you can\nBUT only if you see a BLUE bar around the image.\nDo not press if you see a gray bar.\nPress any key to continue.','center','center',COLORS.WHITE,300);
+DrawFormattedText(w,'You will see pictures with either a blue or gray border around them.\n\nPlease the press the space bar as quickly & accurately as you can\nBUT only if you see a BLUE bar around the image.\n\nDo not press if you see a gray bar.\n\n\nPress any key to continue.','center','center',COLORS.WHITE,300);
 Screen('Flip',w);
 KbWait();
 
 %% Practice
-    
+
+%Add 1 = practice sort of thing? Or practice is mandatory...
+
 DrawFormattedText(w,' First, let''s practice.\n\nPress any key to continue.','center','center',COLORS.WHITE);
 Screen('Flip',w);
 KbWait([],2);
@@ -192,13 +194,13 @@ WaitSecs(.1);
 
 Screen('DrawTexture',w,practpic);
 Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
-DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.','center',YCENTER+400,COLORS.WHITE);
+DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.','center',YCENTER,COLORS.RED,60);
 Screen('Flip',w);
 WaitSecs(5);
 
 Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
 Screen('DrawTexture',w,practpic);
-DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.\n\nPress the space bar to continue.','center',YCENTER+400,COLORS.WHITE);
+DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.\n\nPress the space bar to continue.','center',YCENTER,COLORS.RED,60);
 Screen('Flip',w);
 KbWait([],2);
 
@@ -209,17 +211,17 @@ WaitSecs(.1);
 
 Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
 Screen('DrawTexture',w,practpic);
-DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.','center',YCENTER+400,COLORS.WHITE);
+DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.','center',YCENTER,COLORS.RED,60);
 Screen('Flip',w);
 WaitSecs(5);
 
 Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
 Screen('DrawTexture',w,practpic);
-DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.\n\nPress enter to continue.','center',YCENTER+400,COLORS.WHITE);
+DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.\n\nPress enter to continue.','center',YCENTER,COLORS.RED,60);
 Screen('Flip',w);
 KbWait([],2);
 
-
+%Now let's run a few trials?
 
 
 %% Task
