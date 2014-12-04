@@ -308,6 +308,8 @@ for block = 1:STIM.blocks;
     KbWait();
     Screen('TextSize',w,old);
     
+    %XXX: Game like element
+    %XXX: Make it engaging.
         
     
 end
