@@ -52,24 +52,53 @@ COLORS.NO = [192 192 192]';     %color of no rectangle
 
 
 STIM = struct;
-STIM.blocks = 8;
-STIM.trials = 25;
+STIM.blocks = 10;
+STIM.trials = 32;
+STIM.gotrials = 140;
+STIM.notrials = 140;
 STIM.trialdur = 1.250;
 
 %% Find and load pics
-[imgdir,~,~] = fileparts(which('Lawrence_GoNoGo.m'));
+[imgdir,~,~] = fileparts(which('MasterPics_PlaceHolder.m'));
+picratefolder = fullfile(imgdir,'SavingsRatings');
 
 try
-    cd([imgdir filesep 'IMAGES'])
+    cd(picratefolder)
 catch
-    error('Could not find and/or open the IMAGES folder.');
+    error('Could not find and/or open the .');
 end
+
+filen = sprintf('PicRate_%03d.mat',ID);
+try
+    p = open(filen);
+catch
+    warning('Could not find and/or open the rating file.');
+    commandwindow;
+    randopics = input('Would you like to continue with a random selection of images? [1 = Yes, 0 = No]');
+    if randopics == 1
+        p = struct;
+        p.PicRating.go = dir('Healthy*');
+        p.PicRating.no = dir('Unhealthy*');
+        %XXX: ADD RANDOMIZATION SO THAT SAME 80 IMAGES AREN'T CHOSEN
+        %EVERYTIME
+    else
+        error('Task cannot proceed without images. Contact Erik (elk@uoregon.edu) if you have continued problems.')
+    end
+    
+end
+
+cd(imgdir);
+ 
 
 PICS =struct;
 if COND == 1;                   %Condtion = 1 is food. 
-    PICS.in.go = dir('good*.jpg');
-    PICS.in.no = dir('*bad*.jpg');
+%     PICS.in.go = dir('good*.jpg');
+%     PICS.in.no = dir('*bad*.jpg');
+    %Choose top 80 most appetizing pics)
+    PICS.in.go = struct('name',{p.PicRating.go(1:80).name}');
+    PICS.in.no = struct('name',{p.PicRating.no(1:80).name}');
     PICS.in.neut = dir('*water*.jpg');
+    
 elseif COND == 2;               %Condition = 2 is not food (birds/flowers)
     PICS.in.go = dir('*bird*.jpg');
     PICS.in.no = dir('*flowers*.jpg');
@@ -86,13 +115,14 @@ end
 %% Set up trials and other stimulus parameters
 SST = struct;
 
-trial_types = [ones(length(PICS.in.go),1); repmat(2,length(PICS.in.no),1); repmat(3,length(PICS.in.neut),1)];  %1 = go; 2 = no; 3 = neutral/variable
-gonogo = [ones(length(PICS.in.go),1); zeros(length(PICS.in.go),1)];                         %1 = go; 0 = nogo;
+trial_types = [ones(STIM.gotrials,1); repmat(2,STIM.notrials,1); repmat(3,length(PICS.in.neut),1)];  %1 = go; 2 = no; 3 = neutral/variable
+gonogo = [ones(STIM.gotrials,1); zeros(STIM.notrials,1)];                         %1 = go; 0 = nogo;
 gonogoh20 = BalanceTrials(sum(trial_types==3),1,[0 1]);     %For neutral, go & no go are randomized
 gonogo = [gonogo; gonogoh20];
 
 %Make long list of #s to represent each pic
-piclist = [1:length(PICS.in.go) 1:length(PICS.in.no) 1:length(PICS.in.neut)]';
+% piclist = [1:length(PICS.in.go) 1:length(PICS.in.no) 1:length(PICS.in.neut)]';
+piclist = [randsample(80,STIM.gotrials,1)' randsample(80,STIM.notrials,1)' 1:length(PICS.in.neut)]';
 trial_types = [trial_types gonogo piclist];
 shuffled = trial_types(randperm(size(trial_types,1)),:);
 
