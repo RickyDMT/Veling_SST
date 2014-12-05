@@ -2,24 +2,19 @@ function Veling_SST(varargin)
 % Developed by ELK based on Veling et al., 2014
 % Contact: elk@uoregon.edu
 % Download latest version at: github.com/RickyDMT/Veling_SST
-%% 12/4 Updates
-% Bigger "X" on wrong trials
-% Force image into square so that all are same size.
-% Check when X is displayed
-% Jitter this one only.
-
 
 
 global KEY COLORS w wRect XCENTER YCENTER PICS STIM SST trial
 
-prompt={'SUBJECT ID' 'Condition (1 or 2)' 'Session (1, 2, or 3)'};
-defAns={'4444' '' ''};
+prompt={'SUBJECT ID' 'Condition (1 or 2)' 'Session (1, 2, or 3)' 'Practice? (1 = Y, 0 = N)'};
+defAns={'4444' '' '' '0'};
 
 answer=inputdlg(prompt,'Please input subject info',1,defAns);
 
 ID=str2double(answer{1});
 COND = str2double(answer{2});
 SESS = str2double(answer{3});
+PRAC = str2double(answer{4});
 
 file_check = sprintf('SST_%d_%d.mat',ID,SESS);
 
@@ -38,7 +33,7 @@ if exist(file_check,'file') == 2;
     error('File already exists. Please double-check and/or re-enter participant data.');
 end
 
-%XXX: Add session to rng
+
 rng(ID); %Seed random number generator with subject ID
 d = clock;
 
@@ -106,9 +101,9 @@ if COND == 1;                   %Condtion = 1 is food.
     PICS.in.neut = dir('Water*');
     
 elseif COND == 2;               %Condition = 2 is not food (birds/flowers)
-    PICS.in.go = dir('*bird*.jpg');
-    PICS.in.no = dir('*flowers*.jpg');
-    PICS.in.neut = dir('*mam*.jpg');
+    PICS.in.go = dir('Bird*');
+    PICS.in.no = dir('Flowers*');
+    PICS.in.neut = dir('Mam*');
 end
 % picsfields = fieldnames(PICS.in);
 
@@ -125,6 +120,7 @@ trial_types = [ones(STIM.gotrials,1); repmat(2,STIM.notrials,1); repmat(3,length
 gonogo = [ones(STIM.gotrials,1); zeros(STIM.notrials,1)];                         %1 = go; 0 = nogo;
 gonogoh20 = BalanceTrials(sum(trial_types==3),1,[0 1]);     %For neutral, go & no go are randomized
 gonogo = [gonogo; gonogoh20];
+% jitter = BalanceTrials(length(gonogo),1,[1 2 3]);
 
 %Make long list of #s to represent each pic
 % piclist = [1:length(PICS.in.go) 1:length(PICS.in.no) 1:length(PICS.in.neut)]';
@@ -192,28 +188,28 @@ end
 %you can set the font sizes and styles here
 Screen('TextFont', w, 'Arial');
 %Screen('TextStyle', w, 1);
-Screen('TextSize',w,40);
+Screen('TextSize',w,30);
 
 KbName('UnifyKeyNames');
 
-%% Set frame size;
+%% Set frame size * Pic Location & Size;
 STIM.framerect = [XCENTER-330; YCENTER-330; XCENTER+330; YCENTER+330];
-
+STIM.imgrect = STIM.framerect + [50; 50; -50; -50];
 
 %% Initial screen
-DrawFormattedText(w,'The stop signal task is about to begin.\nPress any key to continue.','center','center',COLORS.WHITE);
+DrawFormattedText(w,'The stop signal task is about to begin.\nPress any key to continue.','center','center',COLORS.WHITE,50,[],[],1.5);
 Screen('Flip',w);
 KbWait();
 Screen('Flip',w);
 WaitSecs(1);
 
 %% Instructions
-DrawFormattedText(w,'You will see pictures with either a blue or gray border around them.\n\nPlease the press the space bar as quickly & accurately as you can\nBUT only if you see a BLUE bar around the image.\n\nDo not press if you see a gray bar.\n\n\nPress any key to continue.','center','center',COLORS.WHITE,300);
+DrawFormattedText(w,'You will see pictures with either a blue or gray border around them.\n\nPlease the press the space bar as quickly & accurately as you can\nBUT only if you see a BLUE bar around the image.\n\nDo not press if you see a gray bar.\n\n\nPress any key to continue.','center','center',COLORS.WHITE,50,[],[],1.5);
 Screen('Flip',w);
 KbWait();
 
 %% Practice
-
+if PRAC == 1;
 %Add 1 = practice sort of thing? Or practice is mandatory...
 
 DrawFormattedText(w,' First, let''s practice.\n\nPress any key to continue.','center','center',COLORS.WHITE);
@@ -224,39 +220,40 @@ practpic = imread(getfield(PICS,'in','neut',{1},'name'));
 practpic = Screen('MakeTexture',w,practpic);
 
 %GO PRACTICE
-Screen('DrawTexture',w,practpic);
+Screen('DrawTexture',w,practpic,[],STIM.imgrect);
 Screen('Flip',w);
 WaitSecs(.1);
 
-Screen('DrawTexture',w,practpic);
+Screen('DrawTexture',w,practpic,[],STIM.imgrect);
 Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
-DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.','center',YCENTER,COLORS.RED,60);
+DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.','center',YCENTER,COLORS.NO,60);
 Screen('Flip',w);
-WaitSecs(5);
+WaitSecs(3);
 
 Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
-Screen('DrawTexture',w,practpic);
-DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.\n\nPress the space bar to continue.','center',YCENTER,COLORS.RED,60);
+Screen('DrawTexture',w,practpic,[],STIM.imgrect);
+DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.\n\nPress the space bar to continue.','center',YCENTER,COLORS.NO,60);
 Screen('Flip',w);
 KbWait([],2);
 
 %NO GO PRACTICE
-Screen('DrawTexture',w,practpic);
+Screen('DrawTexture',w,practpic,[],STIM.imgrect);
 Screen('Flip',w);
 WaitSecs(.1);
 
 Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
-Screen('DrawTexture',w,practpic);
-DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.','center',YCENTER,COLORS.RED,60);
+Screen('DrawTexture',w,practpic,[],STIM.imgrect);
+DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.','center',YCENTER,COLORS.NO,60);
 Screen('Flip',w);
 WaitSecs(5);
 
 Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
-Screen('DrawTexture',w,practpic);
-DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.\n\nPress enter to continue.','center',YCENTER,COLORS.RED,60);
+Screen('DrawTexture',w,practpic,[],STIM.imgrect);
+DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.\n\nPress enter to continue.','center',YCENTER,COLORS.NO,60);
 Screen('Flip',w);
 KbWait([],2);
 
+end
 %Now let's run a few trials?
 
 
@@ -269,9 +266,17 @@ for block = 1:STIM.blocks;
     DrawFormattedText(w,ibt,'center','center',COLORS.WHITE);
     Screen('Flip',w);
     KbWait([],2);
+    Screen('Flip',w);
+    WaitSecs(1);
 
-    old = Screen('TextSize',w,80);
+    old = Screen('TextSize',w,100);
     for trial = 1:STIM.trials;
+%         %Jitter
+%             %Fixation?
+%             %DrawFormattedText(w,'+','center','center',COLORS.WHITE);
+%             %Screen('Flip',w);
+%         WaitSecs(SST.var.jitter);
+        
         [SST.data.rt(trial,block), SST.data.correct(trial,block)] = DoPicSST(trial,block);
         %Wait 500 ms
         Screen('Flip',w);
@@ -305,8 +310,8 @@ for block = 1:STIM.blocks;
     old = Screen('TextSize',w,25);
     DrawFormattedText(w,block_text,'center',wRect(4)/10,COLORS.WHITE);   %Next lines display all the data.
     DrawFormattedText(w,corr_count,ibt_xdim,ibt_ydim,COLORS.WHITE);
-    DrawFormattedText(w,corr_pert,ibt_xdim,ibt_ydim+30,COLORS.WHITE);    
-    DrawFormattedText(w,ibt_rt,ibt_xdim,ibt_ydim+60,COLORS.WHITE);
+    DrawFormattedText(w,corr_pert,ibt_xdim,ibt_ydim+40,COLORS.WHITE);    
+    DrawFormattedText(w,ibt_rt,ibt_xdim,ibt_ydim+80,COLORS.WHITE);
     %Screen('Flip',w);
     
     if block > 1
@@ -331,8 +336,8 @@ for block = 1:STIM.blocks;
         end
         
         DrawFormattedText(w,'Total Results','center',ibt_ydim+120,COLORS.WHITE);
-        DrawFormattedText(w,corr_count_totes,ibt_xdim,ibt_ydim+150,COLORS.WHITE);
-        DrawFormattedText(w,corr_pert_totes,ibt_xdim,ibt_ydim+180,COLORS.WHITE);
+        DrawFormattedText(w,corr_count_totes,ibt_xdim,ibt_ydim+160,COLORS.WHITE);
+        DrawFormattedText(w,corr_pert_totes,ibt_xdim,ibt_ydim+200,COLORS.WHITE);
         DrawFormattedText(w,tot_rt,ibt_xdim,ibt_ydim+210,COLORS.WHITE);
         %Screen('Flip',w);
     end
@@ -342,7 +347,7 @@ for block = 1:STIM.blocks;
     DrawFormattedText(w,'Press any key to continue.','center',wRect(4)*9/10,COLORS.WHITE);
     Screen('Flip',w);
     KbWait();
-    Screen('TextSize',w,old);
+    Screen('Flip',w);
     
     %XXX: Game like element
     %XXX: Make it engaging.
@@ -394,7 +399,7 @@ function [trial_rt, correct] = DoPicSST(trial,block,varargin)
 global w STIM PICS COLORS SST KEY
 
 %while telap <= STIM.trialdur
-    Screen('DrawTexture',w,PICS.out(trial).texture);
+    Screen('DrawTexture',w,PICS.out(trial).texture,[],STIM.imgrect);
 %     telap = toc(tstart);
     Screen('Flip',w); 
     
@@ -404,7 +409,7 @@ global w STIM PICS COLORS SST KEY
         case {0}
             Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
     end
-    Screen('DrawTexture',w,PICS.out(trial).texture);
+    Screen('DrawTexture',w,PICS.out(trial).texture,[],STIM.imgrect);
     WaitSecs(.1);
     RT_start = Screen('Flip',w);
     telap = GetSecs() - RT_start;
@@ -416,20 +421,20 @@ global w STIM PICS COLORS SST KEY
         if Down == 1 && find(Code) == KEY.rt
             trial_rt = GetSecs() - RT_start;
             
-            Screen('DrawTexture',w,PICS.out(trial).texture);
-%             old = Screen('TextSize',w,40);
+
+
             if SST.var.GoNoGo(trial,block) == 0;
-                Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
+%                 Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
+
                 DrawFormattedText(w,'X','center','center',COLORS.RED);
+                Screen('Flip',w);
                 correct = 0;
+                WaitSecs(.5);
             else
-                Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
+%                 Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
 %                 DrawFormattedText(w,'+','center','center',COLORS.GREEN);
                 correct = 1;
             end
-            Screen('Flip',w');
-%             Screen('TextSize',w,old);
-            WaitSecs(.5);
             break;
         end
     end
@@ -441,7 +446,7 @@ global w STIM PICS COLORS SST KEY
             Screen('Flip',w);                   %'Flip in order to clear buffer; next 'flip' (in main script) flips to black screen.
             correct = 1;
         else
-            Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
+%             Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
 %             DrawFormattedText(w,'Please Click Faster','center','center',COLORS.RED);
             DrawFormattedText(w,'X','center','center',COLORS.RED);
             Screen('Flip',w);
