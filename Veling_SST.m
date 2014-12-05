@@ -2,6 +2,12 @@ function Veling_SST(varargin)
 % Developed by ELK based on Veling et al., 2014
 % Contact: elk@uoregon.edu
 % Download latest version at: github.com/RickyDMT/Veling_SST
+%% 12/4 Updates
+% Bigger "X" on wrong trials
+% Force image into square so that all are same size.
+% Check when X is displayed
+% Jitter this one only.
+
 
 
 global KEY COLORS w wRect XCENTER YCENTER PICS STIM SST trial
@@ -32,7 +38,7 @@ if exist(file_check,'file') == 2;
     error('File already exists. Please double-check and/or re-enter participant data.');
 end
 
-
+%XXX: Add session to rng
 rng(ID); %Seed random number generator with subject ID
 d = clock;
 
@@ -97,7 +103,7 @@ if COND == 1;                   %Condtion = 1 is food.
     %Choose top 80 most appetizing pics)
     PICS.in.go = struct('name',{p.PicRating.go(1:80).name}');
     PICS.in.no = struct('name',{p.PicRating.no(1:80).name}');
-    PICS.in.neut = dir('*water*.jpg');
+    PICS.in.neut = dir('Water*');
     
 elseif COND == 2;               %Condition = 2 is not food (birds/flowers)
     PICS.in.go = dir('*bird*.jpg');
