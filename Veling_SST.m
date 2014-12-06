@@ -3,6 +3,26 @@ function Veling_SST(varargin)
 % Contact: elk@uoregon.edu
 % Download latest version at: github.com/RickyDMT/Veling_SST
 
+% Dictionary:
+%All variables and data are stored in a .mat structure called SST_###.mat.
+%A script will be developed (12/5 = in development) to extract data to a
+%csv or some similar format
+
+%Variables:
+%SST.var.trial_type: Tells you what pic type was displayed; 1 = Go pic
+    %(e.g., lo cal food); 2 = NoGo (high cal food); 3 = Neutral (water)
+%SST.var.picnum:  Which pic from list was chosen.
+%SST.var.GoNoGo:  1 = go trial, 0 = no-go trial
+
+%Data:
+%All trial-by-trial data are arranged such that each column represents a
+%block and each row represents a trial within that block.
+%SST.data.rt: Reaction time. Initially all 0s. Correct & incorrect rts
+    %stored in seconds. If appropriate non-press, value = -999.
+%SST.data.correct: Designates if trial was correct. initially -999 (and so,
+    %remains -999 if trials was not completed); 1 = correct; 0 = incorrect.
+%SST.data.avg_rt: Average reaction time per block.
+%SST.data.info: Basic info of subject, session, condition, etc.
 
 global KEY COLORS w wRect XCENTER YCENTER PICS STIM SST trial
 
