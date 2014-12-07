@@ -438,7 +438,7 @@ global w STIM PICS COLORS SST KEY
     while telap <= (STIM.trialdur - .1); 
         telap = GetSecs() - RT_start;
         [Down, ~, Code] = KbCheck(); %waits for space bar to be pressed
-        if Down == 1 && find(Code) == KEY.rt
+        if Down == 1 && any(find(Code) == KEY.rt)
             trial_rt = GetSecs() - RT_start;
             
 
