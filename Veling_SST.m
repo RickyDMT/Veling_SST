@@ -309,30 +309,34 @@ for block = 1:STIM.blocks;
     block_text = sprintf('Block %d Results',block);
     
     c = SST.data.correct(:,block) == 1;                                 %Find correct trials
-    corr_count = sprintf('Number Correct:\t%d of %d',length(find(c)),STIM.trials);  %Number correct = length of find(c)
+%     corr_count = sprintf('Number Correct:\t%d of %d',length(find(c)),STIM.trials);  %Number correct = length of find(c)
     corr_per = length(find(c))*100/length(c);                           %Percent correct = length find(c) / total trials
-    corr_pert = sprintf('Percent Correct:\t%4.1f%%',corr_per);          %sprintf that data to string.
+%     corr_pert = sprintf('Percent Correct:\t%4.1f%%',corr_per);          %sprintf that data to string.
     
     if isempty(c(c==1))
         %Don't try to calculate avg RT, they got them all wrong (WTF?)
         %Display "N/A" for this block's RT.
-        ibt_rt = sprintf('Average RT:\tUnable to calculate RT due to 0 correct trials.');
+%         ibt_rt = sprintf('Average RT:\tUnable to calculate RT due to 0 correct trials.');
+        fulltext = sprintf('Number Correct:\t\t%d of %d\nPercent Correct:\t\t%4.1f%%\nAverage RT:\t\tUnable to calculate due to 0 correct trials.',length(find(c)),STIM.trials,corr_per);
+
     else
         block_go = SST.var.GoNoGo(:,block) == 1;                        %Find go trials
         blockrts = SST.data.rt(:,block);                                %Pull all RT data
         blockrts = blockrts(c & block_go);                              %Resample RT only if go & correct.
         SST.data.avg_rt(block) = fix(mean(blockrts)*1000);                        %Display avg rt in milliseconds.
-        ibt_rt = sprintf('Average RT:\t\t\t%3d milliseconds',SST.data.avg_rt(block));
+%         ibt_rt = sprintf('Average RT:\t\t\t%3d milliseconds',SST.data.avg_rt(block));
+        fulltext = sprintf('Number Correct:\t\t%d of %d\nPercent Correct:\t\t%4.1f%%\nAverage Rt:\t\t\t%3d milliseconds',length(find(c)),STIM.trials,corr_per,SST.data.avg_rt(block));
+        
     end
     
     ibt_xdim = wRect(3)/10;
     ibt_ydim = wRect(4)/4;
     old = Screen('TextSize',w,25);
     DrawFormattedText(w,block_text,'center',wRect(4)/10,COLORS.WHITE);   %Next lines display all the data.
-    DrawFormattedText(w,corr_count,ibt_xdim,ibt_ydim,COLORS.WHITE);
-    DrawFormattedText(w,corr_pert,ibt_xdim,ibt_ydim+40,COLORS.WHITE);    
-    DrawFormattedText(w,ibt_rt,ibt_xdim,ibt_ydim+80,COLORS.WHITE);
-    %Screen('Flip',w);
+%     DrawFormattedText(w,corr_count,ibt_xdim,ibt_ydim,COLORS.WHITE);
+%     DrawFormattedText(w,corr_pert,ibt_xdim,ibt_ydim+40,COLORS.WHITE);    
+%     DrawFormattedText(w,ibt_rt,ibt_xdim,ibt_ydim+80,COLORS.WHITE);
+    DrawFormattedText(w,fulltext,ibt_xdim,ibt_ydim,COLORS.WHITE,[],[],[],1.5);
     
     if block > 1
         % Also display rest of block data summary
