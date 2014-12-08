@@ -214,7 +214,7 @@ KbName('UnifyKeyNames');
 
 %% Set frame size * Pic Location & Size;
 STIM.framerect = [XCENTER-330; YCENTER-330; XCENTER+330; YCENTER+330];
-STIM.imgrect = STIM.framerect + [50; 50; -50; -50];
+STIM.imgrect = STIM.framerect + [30; 30; -30; -30];
 
 %% Initial screen
 DrawFormattedText(w,'The stop signal task is about to begin.\nPress any key to continue.','center','center',COLORS.WHITE,50,[],[],1.5);
@@ -246,13 +246,13 @@ WaitSecs(.1);
 
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
 Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
-DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.','center',YCENTER,COLORS.NO,60);
+DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.','center',STIM.framerect(4)+20,COLORS.WHITE);
 Screen('Flip',w);
 WaitSecs(3);
 
 Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
-DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.\n\nPress the space bar to continue.','center',YCENTER,COLORS.NO,60);
+DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.\nPress the space bar to continue.','center',STIM.framerect(4)+20,COLORS.WHITE);
 Screen('Flip',w);
 KbWait([],2);
 
@@ -263,13 +263,13 @@ WaitSecs(.1);
 
 Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
-DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.','center',YCENTER,COLORS.NO,60);
+DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.','center',STIM.framerect(4)+20,COLORS.WHITE);
 Screen('Flip',w);
 WaitSecs(5);
 
 Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
-DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.\n\nPress enter to continue.','center',YCENTER,COLORS.NO,60);
+DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.\nPress enter to continue.','center',STIM.framerect(4)+20,COLORS.WHITE);
 Screen('Flip',w);
 KbWait([],2);
 
@@ -331,7 +331,7 @@ for block = 1:STIM.blocks;
     
     ibt_xdim = wRect(3)/10;
     ibt_ydim = wRect(4)/4;
-    old = Screen('TextSize',w,25);
+%     old = Screen('TextSize',w,25);
     DrawFormattedText(w,block_text,'center',wRect(4)/10,COLORS.WHITE);   %Next lines display all the data.
 %     DrawFormattedText(w,corr_count,ibt_xdim,ibt_ydim,COLORS.WHITE);
 %     DrawFormattedText(w,corr_pert,ibt_xdim,ibt_ydim+40,COLORS.WHITE);    
@@ -342,32 +342,33 @@ for block = 1:STIM.blocks;
         % Also display rest of block data summary
         tot_trial = block * STIM.trials;
         totes_c = SST.data.correct == 1;
-        corr_count_totes = sprintf('Number Correct: \t%d of %d',length(find(totes_c)),tot_trial);
+%         corr_count_totes = sprintf('Number Correct: \t%d of %d',length(find(totes_c)),tot_trial);
         corr_per_totes = length(find(totes_c))*100/tot_trial;
-        corr_pert_totes = sprintf('Percent Correct:\t%4.1f%%',corr_per_totes);
+%         corr_pert_totes = sprintf('Percent Correct:\t%4.1f%%',corr_per_totes);
         
         if isempty(totes_c(totes_c ==1))
             %Don't try to calculate RT, they have missed EVERY SINGLE GO
             %TRIAL! 
             %Stop task & alert experimenter?
-            tot_rt = sprintf('Block %d Average RT:\tUnable to calculate RT due to 0 correct trials.',block);
+%             tot_rt = sprintf('Block %d Average RT:\tUnable to calculate RT due to 0 correct trials.',block);
+            fullblocktext = sprintf('Number Correct:\t\t%d of %d\nPercent Correct:\t\t%4.1f%%\nAverage RT:\tUnable to calculate RT due to 0 correct trials.',length(find(totes_c)),tot_trial,corr_per_totes);            
         else
             tot_go = SST.var.GoNoGo == 1;
             totrts = SST.data.rt;
             totrts = totrts(totes_c & tot_go);
             avg_rt_tote = fix(mean(totrts)*1000);     %Display in units of milliseconds.
-            tot_rt = sprintf('Average RT:\t\t\t%3d milliseconds',avg_rt_tote);
+%             tot_rt = sprintf('Average RT:\t\t\t%3d milliseconds',avg_rt_tote);
+            fullblocktext = sprintf('Number Correct:\t\t%d of %d\nPercent Correct:\t\t%4.1f%%\nAverage RT:\t\t\t%3d milliseconds',length(find(totes_c)),tot_trial,corr_per_totes,avg_rt_tote);
         end
         
-        DrawFormattedText(w,'Total Results','center',ibt_ydim+120,COLORS.WHITE);
-        DrawFormattedText(w,corr_count_totes,ibt_xdim,ibt_ydim+160,COLORS.WHITE);
-        DrawFormattedText(w,corr_pert_totes,ibt_xdim,ibt_ydim+200,COLORS.WHITE);
-        DrawFormattedText(w,tot_rt,ibt_xdim,ibt_ydim+210,COLORS.WHITE);
+        DrawFormattedText(w,'Total Results','center',YCENTER,COLORS.WHITE);
+        DrawFormattedText(w,fullblocktext,ibt_xdim,YCENTER+40,COLORS.WHITE,[],[],[],1.5);
+%         DrawFormattedText(w,corr_count_totes,ibt_xdim,ibt_ydim+160,COLORS.WHITE);
+%         DrawFormattedText(w,corr_pert_totes,ibt_xdim,ibt_ydim+200,COLORS.WHITE);
+%         DrawFormattedText(w,tot_rt,ibt_xdim,ibt_ydim+210,COLORS.WHITE);
         %Screen('Flip',w);
     end
-    
-    Screen('Flip',w,[],1);
-    WaitSecs(5);
+
     DrawFormattedText(w,'Press any key to continue.','center',wRect(4)*9/10,COLORS.WHITE);
     Screen('Flip',w);
     KbWait();
