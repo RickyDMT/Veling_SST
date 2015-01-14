@@ -24,10 +24,10 @@ function Veling_SST(varargin)
 %SST.data.avg_rt: Average reaction time per block.
 %SST.data.info: Basic info of subject, session, condition, etc.
 
-global KEY COLORS w wRect XCENTER YCENTER PICS STIM SST trial
+global KEY COLORS w wRect XCENTER YCENTER PICS STIM SST trial scan_sec
 
-prompt={'SUBJECT ID' 'Condition (1 or 2)' 'Session (1, 2, or 3)' 'Practice? (1 = Y, 0 = N)'};
-defAns={'4444' '' '' '0'};
+prompt={'SUBJECT ID' 'Condition (1 or 2)' 'Session (1, 2, or 3)' 'Practice? (1 = Y, 0 = N)' 'fMRI? (1 = Y, 0 = N)'};
+defAns={'4444' '' '' '0' ''};
 
 answer=inputdlg(prompt,'Please input subject info',1,defAns);
 
@@ -35,6 +35,7 @@ ID=str2double(answer{1});
 COND = str2double(answer{2});
 SESS = str2double(answer{3});
 PRAC = str2double(answer{4});
+fmri = str2double(answer{5});
 
 file_check = sprintf('SST_%d_%d.mat',ID,SESS);
 
@@ -59,6 +60,7 @@ d = clock;
 
 KEY = struct;
 KEY.rt = KbName('SPACE'); %To end random trial selection
+KEY.trigger = 52;  %This is an apostrophe...
 
 
 COLORS = struct;
@@ -78,6 +80,27 @@ STIM.trials = 32;
 STIM.gotrials = 140;
 STIM.notrials = 140;
 STIM.trialdur = 1.250;
+STIM.jitter = [1 2 3];
+
+%% Keyboard stuff for fMRI...
+
+%list devices
+[keyboardIndices, productNames] = GetKeyboardIndices;
+
+isxkeys=strcmp(productNames,'Xkeys');
+
+xkeys=keyboardIndices(isxkeys);
+macbook = keyboardIndices(strcmp(productNames,'Apple Internal Keyboard / Trackpad'));
+
+%in case something goes wrong or the keyboard name isn?t exactly right
+if isempty(macbook)
+    macbook=-1;
+end
+
+%in case you?re not hooked up to the scanner, then just work off the keyboard
+if isempty(xkeys)
+    xkeys=macbook;
+end
 
 %% Find and load pics
 [imgdir,~,~] = fileparts(which('MasterPics_PlaceHolder.m'));
@@ -140,12 +163,13 @@ trial_types = [ones(STIM.gotrials,1); repmat(2,STIM.notrials,1); repmat(3,length
 gonogo = [ones(STIM.gotrials,1); zeros(STIM.notrials,1)];                         %1 = go; 0 = nogo;
 gonogoh20 = BalanceTrials(sum(trial_types==3),1,[0 1]);     %For neutral, go & no go are randomized
 gonogo = [gonogo; gonogoh20];
-% jitter = BalanceTrials(length(gonogo),1,[1 2 3]);
+jitter = BalanceTrials(length(gonogo),1,[STIM.jitter]);
+jitter = jitter(1:length(gonogo));
 
 %Make long list of #s to represent each pic
 % piclist = [1:length(PICS.in.go) 1:length(PICS.in.no) 1:length(PICS.in.neut)]';
 piclist = [randsample(80,STIM.gotrials,1)' randsample(80,STIM.notrials,1)' 1:length(PICS.in.neut)]';
-trial_types = [trial_types gonogo piclist];
+trial_types = [trial_types gonogo piclist jitter];
 shuffled = trial_types(randperm(size(trial_types,1)),:);
 
 for g = 1:STIM.blocks;
@@ -154,11 +178,15 @@ for g = 1:STIM.blocks;
     SST.var.trial_type(1:STIM.trials,g) = shuffled(row:rend,1);
     SST.var.picnum(1:STIM.trials,g) = shuffled(row:rend,3);
     SST.var.GoNoGo(1:STIM.trials,g) = shuffled(row:rend,2);
+    SST.var.jitter(1:STIM.trials,g) = shuffled(row:rend,4);
 end
 
     SST.data.rt = zeros(STIM.trials, STIM.blocks);
     SST.data.correct = zeros(STIM.trials, STIM.blocks)-999;
     SST.data.avg_rt = zeros(STIM.blocks,1);
+    SST.data.fix_onset = NaN(STIM.trials, STIM.blocks);
+    SST.data.pic_onset = NaN(STIM.trials, STIM.blocks);
+    SST.data.frame_onset = NaN(STIM.trials, STIM.blocks);
     SST.data.info.ID = ID;
     SST.data.info.cond = COND;               %Condtion 1 = Food; Condition 2 = animals
     SST.data.info.session = SESS;
@@ -276,6 +304,16 @@ KbWait([],2);
 end
 %Now let's run a few trials?
 
+%% Trigger
+
+if fmri == 1;
+    DrawFormattedText(w,'Synching with fMRI: Waiting for trigger','center','center',COLORS.WHITE);
+    Screen('Flip',w);
+    
+    scan_sec = KbTriggerWait(KEY.trigger,xkeys);
+else
+    scan_sec = GetSecs();
+end
 
 %% Task
 
@@ -296,6 +334,10 @@ for block = 1:STIM.blocks;
 %             %DrawFormattedText(w,'+','center','center',COLORS.WHITE);
 %             %Screen('Flip',w);
 %         WaitSecs(SST.var.jitter);
+        DrawFormattedText(w,'+','center','center',COLORS.WHITE);
+        fixon = Screen('Flip',w);
+        SST.data.fix_onset(trial,block) = fixon - scan_sec;
+        WaitSecs(SST.var.jitter(trial,block));
         
         [SST.data.rt(trial,block), SST.data.correct(trial,block)] = DoPicSST(trial,block);
         %Wait 500 ms
@@ -389,23 +431,23 @@ end
 %get the parent directory, which is one level up from mfilesdir
 %[parentdir,~,~] =fileparts(mfilesdir);
 savedir = [mfilesdir filesep 'Results' filesep];
+savename = ['SST_' num2str(ID) '.mat'];
 
-if exist(savedir,'dir') == 0;
-    % If savedir (the directory to save files in) does not exist, make it.
-    mkdir(savedir);
+if exist(savename,'file')==2;
+    savename = ['SST' num2str(ID) sprintf('%s_%2.0f%02.0f',date,d(4),d(5)) '.mat'];
 end
     
 try
-    
-    %create the paths to the other directories, starting from the parent
-    %directory
-    % savedir = [parentdir filesep 'Results\proDMT\'];
-    %         savedir = [mfilesdir filesep 'Results' filesep];
-    
-    save([savedir 'SST_' num2str(ID) '_' num2str(SESS) '.mat'],'SST');
+    save([savedir savename],'SST');
     
 catch
-    error('Although data was (most likely) collected, file was not properly saved. 1. Right click on variable in right-hand side of screen. 2. Save as SST_#_#.mat where first # is participant ID and second is session #. If you are still unsure what to do, contact your boss, Kim Martin, or Erik Knight (elk@uoregon.edu).')
+    warning('Something is amiss with this save. Retrying to save in a more general location...');
+    try
+        save([mfilesdir filesep savename],'SST');
+    catch
+        warning('STILL problems saving....Try right-clicking on "SST" and Save as...');
+        SST
+    end
 end
 
 DrawFormattedText(w,'Thank you for participating\n in this part of the study!','center','center',COLORS.WHITE);
@@ -421,12 +463,12 @@ function [trial_rt, correct] = DoPicSST(trial,block,varargin)
 % tstart = tic;
 % telap = toc(tstart);
 
-global w STIM PICS COLORS SST KEY
+global w STIM PICS COLORS SST KEY scan_sec
 
 %while telap <= STIM.trialdur
     Screen('DrawTexture',w,PICS.out(trial).texture,[],STIM.imgrect);
 %     telap = toc(tstart);
-    Screen('Flip',w); 
+    picon = Screen('Flip',w);
     
     switch SST.var.GoNoGo(trial,block)
         case {1}
@@ -481,6 +523,8 @@ global w STIM PICS COLORS SST KEY
         trial_rt = -999;
     end
     
+    SST.data.pic_onset(trial,block) = picon - scan_sec;
+    SST.data.frame_onset(trial,block) = RT_start - scan_sec;
 
 %end
 end
