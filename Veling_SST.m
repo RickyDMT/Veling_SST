@@ -27,7 +27,7 @@ function Veling_SST(varargin)
 global KEY COLORS w wRect XCENTER YCENTER PICS STIM SST trial scan_sec
 
 prompt={'SUBJECT ID' 'Condition (1 or 2)' 'Session (1, 2, or 3)' 'Practice? (1 = Y, 0 = N)' 'fMRI? (1 = Y, 0 = N)'};
-defAns={'4444' '' '' '0' ''};
+defAns={'4444' '1' '1' '0' '1'};
 
 answer=inputdlg(prompt,'Please input subject info',1,defAns);
 
