@@ -59,8 +59,12 @@ rng(ID); %Seed random number generator with subject ID
 d = clock;
 
 KEY = struct;
-KEY.rt = KbName('SPACE'); %To end random trial selection
-KEY.trigger = 52;  %This is an apostrophe...
+if fmri == 1;
+    KEY.rt = KbName('3#');
+else
+    KEY.rt = KbName('SPACE');
+end
+KEY.trigger = KbName('''"');  %This is an apostrophe...
 
 
 COLORS = struct;
@@ -76,7 +80,7 @@ COLORS.NO = [192 192 192]';     %color of no rectangle
 
 STIM = struct;
 STIM.blocks = 10;
-STIM.trials = 32;
+STIM.trials = 30;
 STIM.gotrials = 140;
 STIM.notrials = 140;
 STIM.trialdur = 1.250;
@@ -103,16 +107,18 @@ if isempty(xkeys)
 end
 
 %% Find and load pics
-[imgdir,~,~] = fileparts(which('MasterPics_PlaceHolder.m'));
-picratefolder = fullfile(imgdir,'SavingsRatings');
+[mdir,~,~] = fileparts(which('Veling_SST.m'));
+imgdir = [mdir filesep 'MasterPics'];
+picratefolder = fullfile(mdir,'Ratings');
 
+if COND == 1;
 try
     cd(picratefolder)
 catch
-    error('Could not find and/or open the .');
+    error('Could not find and/or open the rating folder.');
 end
 
-filen = sprintf('PicRate_%03d.mat',ID);
+filen = sprintf('PicRate_%d.mat',ID);
 try
     p = open(filen);
 catch
@@ -120,6 +126,7 @@ catch
     commandwindow;
     randopics = input('Would you like to continue with a random selection of images? [1 = Yes, 0 = No]');
     if randopics == 1
+        cd(imgdir)
         p = struct;
         p.PicRating.go = dir('Healthy*');
         p.PicRating.no = dir('Unhealthy*');
@@ -129,6 +136,7 @@ catch
         error('Task cannot proceed without images. Contact Erik (elk@uoregon.edu) if you have continued problems.')
     end
     
+end
 end
 
 cd(imgdir);
@@ -359,7 +367,7 @@ for block = 1:STIM.blocks;
         %Don't try to calculate avg RT, they got them all wrong (WTF?)
         %Display "N/A" for this block's RT.
 %         ibt_rt = sprintf('Average RT:\tUnable to calculate RT due to 0 correct trials.');
-        fulltext = sprintf('Number Correct:\t\t%d of %d\nPercent Correct:\t\t%4.1f%%\nAverage RT:\t\tUnable to calculate due to 0 correct trials.',length(find(c)),STIM.trials,corr_per);
+        fulltext = sprintf('Number Correct:        %d of %d\nPercent Correct:        %4.1f%%\nAverage RT:        Unable to calculate due to 0 correct trials.',length(find(c)),STIM.trials,corr_per);
 
     else
         block_go = SST.var.GoNoGo(:,block) == 1;                        %Find go trials
@@ -367,7 +375,7 @@ for block = 1:STIM.blocks;
         blockrts = blockrts(c & block_go);                              %Resample RT only if go & correct.
         SST.data.avg_rt(block) = fix(mean(blockrts)*1000);                        %Display avg rt in milliseconds.
 %         ibt_rt = sprintf('Average RT:\t\t\t%3d milliseconds',SST.data.avg_rt(block));
-        fulltext = sprintf('Number Correct:\t\t%d of %d\nPercent Correct:\t\t%4.1f%%\nAverage Rt:\t\t\t%3d milliseconds',length(find(c)),STIM.trials,corr_per,SST.data.avg_rt(block));
+        fulltext = sprintf('Number Correct:        %d of %d\nPercent Correct:        %4.1f%%\nAverage Rt:            %3d milliseconds',length(find(c)),STIM.trials,corr_per,SST.data.avg_rt(block));
         
     end
     
