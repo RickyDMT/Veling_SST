@@ -64,7 +64,7 @@ if fmri == 1;
 else
     KEY.rt = KbName('SPACE');
 end
-KEY.trigger = KbName('''"');  %This is an apostrophe...
+KEY.trigger = KbName('''');  %This is an apostrophe...
 
 
 COLORS = struct;
@@ -83,6 +83,7 @@ STIM.blocks = 10;
 STIM.trials = 30;
 STIM.gotrials = 140;
 STIM.notrials = 140;
+STIM.neutrials = 40;
 STIM.trialdur = 1.250;
 STIM.jitter = [1 2 3];
 
@@ -167,28 +168,75 @@ end
 %% Set up trials and other stimulus parameters
 SST = struct;
 
-trial_types = [ones(STIM.gotrials,1); repmat(2,STIM.notrials,1); repmat(3,length(PICS.in.neut),1)];  %1 = go; 2 = no; 3 = neutral/variable
+trial_types = [ones(STIM.gotrials,1); repmat(2,STIM.notrials,1); repmat(3,STIM.neutrials,1)];  %1 = go; 2 = no; 3 = neutral/variable
 gonogo = [ones(STIM.gotrials,1); zeros(STIM.notrials,1)];                         %1 = go; 0 = nogo;
-gonogoh20 = BalanceTrials(sum(trial_types==3),1,[0 1]);     %For neutral, go & no go are randomized
+gonogoh20 = BalanceTrials(STIM.neutrials,1,[0 1]);     %For neutral, go & no go are randomized
 gonogo = [gonogo; gonogoh20];
 jitter = BalanceTrials(length(gonogo),1,[STIM.jitter]);
 jitter = jitter(1:length(gonogo));
 
 %Make long list of #s to represent each pic
-% piclist = [1:length(PICS.in.go) 1:length(PICS.in.no) 1:length(PICS.in.neut)]';
-piclist = [randsample(80,STIM.gotrials,1)' randsample(80,STIM.notrials,1)' 1:length(PICS.in.neut)]';
+piclist = NaN(length(gonogo),1);
+
 trial_types = [trial_types gonogo piclist jitter];
 shuffled = trial_types(randperm(size(trial_types,1)),:);
+shuffled((shuffled(:,1)==1),3) = [randperm(80)'; randperm(80,STIM.gotrials-80)'];
+shuffled((shuffled(:,1)==2),3) = [randperm(80)'; randperm(80,STIM.notrials-80)'];
+shuffled((shuffled(:,1)==3),3) = [randperm(20)'; randperm(20,STIM.neutrials-20)'];
 
 for g = 1:STIM.blocks;
     row = ((g-1)*STIM.trials)+1;
     rend = row+STIM.trials - 1;
     SST.var.trial_type(1:STIM.trials,g) = shuffled(row:rend,1);
-    SST.var.picnum(1:STIM.trials,g) = shuffled(row:rend,3);
     SST.var.GoNoGo(1:STIM.trials,g) = shuffled(row:rend,2);
+    SST.var.picnum(1:STIM.trials,g) = shuffled(row:rend,3);
     SST.var.jitter(1:STIM.trials,g) = shuffled(row:rend,4);
+    
 end
 
+%%
+%check for repeat pics in a any block
+for tt = 1:3
+    for b = 1:10;
+        t = SST.var.trial_type(:,b) == tt;   %Check for trials of trial type t in block b
+        t_l = length(find(t));              %Check how many trials there are of type t in block b
+        clist = SST.var.picnum(t,b);            %Find all pic numbers for trial type t in block b
+        cc = unique(clist);                     %What are unique pic numbers
+        c_l = length(cc);                   %How many unique numbers are there
+        diff = t_l - c_l;
+        
+        while diff > 0          %If there are more trials than unique numbers
+            for v = 1:c_l;      %Go through every unique number....
+                rep_loc = find(clist == cc(v));   %And find the location(s) of that unique number
+                while length(rep_loc) > 1                          %If there multiple instances of that unqiue number...
+                    for u = 2:length(rep_loc)                   %Go through each instance, starting with second.
+                        newnum  = randperm(80,1);               %Randomly choose new number.
+                        newcheck = length(find(cc == newnum));  %Check if that new number has been used all ready.
+                        while newcheck > 0                      %Trapped in while loop until newnum is unique
+                            newnum  = randperm(80,1);
+                            newcheck = length(find(cc == newnum));
+                        end
+                        clist(rep_loc(u)) = newnum; %insert new number into c array...which later be put back into SST structure
+                        
+                        
+                    end
+                    cc = unique(clist);
+                    rep_loc = find(clist == cc(v));
+                end
+                
+            end
+            SST.var.picnum(t,b) = clist;
+            cc = unique(SST.var.picnum(t,b));                     %What are unique pic numbers
+            c_l = length(cc);                                     %How many unique numbers are there
+            diff = t_l - c_l;
+            
+        end
+        
+            
+    end
+end
+
+%%
     SST.data.rt = zeros(STIM.trials, STIM.blocks);
     SST.data.correct = zeros(STIM.trials, STIM.blocks)-999;
     SST.data.avg_rt = zeros(STIM.blocks,1);
