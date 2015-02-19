@@ -37,7 +37,7 @@ SESS = str2double(answer{3});
 PRAC = str2double(answer{4});
 fmri = str2double(answer{5});
 
-file_check = sprintf('SST_%d_%d.mat',ID,SESS);
+file_check = sprintf('SST_%d-%d.mat',ID,SESS);
 
 %Make sure input data makes sense.
 % try
@@ -113,31 +113,31 @@ imgdir = [mdir filesep 'MasterPics'];
 picratefolder = fullfile(mdir,'Ratings');
 
 if COND == 1;
-try
-    cd(picratefolder)
-catch
-    error('Could not find and/or open the rating folder.');
-end
-
-filen = sprintf('PicRate_%d.mat',ID);
-try
-    p = open(filen);
-catch
-    warning('Could not find and/or open the rating file.');
-    commandwindow;
-    randopics = input('Would you like to continue with a random selection of images? [1 = Yes, 0 = No]');
-    if randopics == 1
-        cd(imgdir)
-        p = struct;
-        p.PicRating.go = dir('Healthy*');
-        p.PicRating.no = dir('Unhealthy*');
-        %XXX: ADD RANDOMIZATION SO THAT SAME 80 IMAGES AREN'T CHOSEN
-        %EVERYTIME
-    else
-        error('Task cannot proceed without images. Contact Erik (elk@uoregon.edu) if you have continued problems.')
+    try
+        cd(picratefolder)
+    catch
+        error('Could not find and/or open the rating folder.');
     end
     
-end
+    filen = sprintf('PicRatings_CC_%d.m',ID);
+    try
+        p = open(filen);
+    catch
+        warning('Could not find and/or open the rating file.');
+        commandwindow;
+        randopics = input('Would you like to continue with a random selection of images? [1 = Yes, 0 = No]');
+        if randopics == 1
+            cd(imgdir)
+            p = struct;
+            p.PicRating.go = dir('Healthy*');
+            p.PicRating.no = dir('Unhealthy*');
+            %XXX: ADD RANDOMIZATION SO THAT SAME 80 IMAGES AREN'T CHOSEN
+            %EVERYTIME
+        else
+            error('Task cannot proceed without images. Contact Erik (elk@uoregon.edu) if you have continued problems.')
+        end
+        
+    end
 end
 
 cd(imgdir);
@@ -487,7 +487,7 @@ end
 %get the parent directory, which is one level up from mfilesdir
 %[parentdir,~,~] =fileparts(mfilesdir);
 savedir = [mfilesdir filesep 'Results' filesep];
-savename = ['SST_' num2str(ID) '.mat'];
+savename = ['vSST_' num2str(ID) '-' num2str(SESS) '.mat'];
 
 if exist(savename,'file')==2;
     savename = ['SST' num2str(ID) sprintf('%s_%2.0f%02.0f',date,d(4),d(5)) '.mat'];
