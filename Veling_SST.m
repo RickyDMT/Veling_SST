@@ -115,6 +115,7 @@ end
 imgdir = [mdir filesep 'MasterPics'];
 % imgdir = '/Users/canelab/Documents/StudyTasks/MasterPics';
 picratefolder = fullfile(mdir,'Ratings');
+randopics = 0;
 
 if COND == 1;
     try
