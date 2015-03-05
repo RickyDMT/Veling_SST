@@ -111,10 +111,17 @@ if isempty(xkeys)
 end
 
 %% Find and load pics
+%This is setup for LCNI computers, which has pics in a folder within folder
+%that contains Veling_SST.m.  At ORI, there is a separate MasterPics folder
+%which all .m files point to...
+
 [mdir,~,~] = fileparts(which('Veling_SST.m'));
 imgdir = [mdir filesep 'MasterPics'];
 % imgdir = '/Users/canelab/Documents/StudyTasks/MasterPics';
-picratefolder = fullfile(mdir,'Ratings');
+picratefolder = fullfile(mdir,'Ratings');   %Name of folder at ORI
+% Setup for ORI...
+% [imgdir,~,~] = fileparts(which('MasterPics_PlaceHolder.m')); Setup for ORI
+% picratefolder = fullfile(mdir,'Saved_Pic_Ratings');   %Name of folder at ORI
 randopics = 0;
 
 if COND == 1;
@@ -124,7 +131,7 @@ if COND == 1;
         error('Could not find and/or open the rating folder.');
     end
     
-    filen = sprintf('PicRatings_CC_%d.m',ID);
+    filen = sprintf('PicRatings_CC_%d-1.mat',ID); %This only looks for ratings from initial session.
     try
         p = open(filen);
     catch
