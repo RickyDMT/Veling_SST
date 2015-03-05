@@ -60,11 +60,14 @@ d = clock;
 
 KEY = struct;
 if fmri == 1;
-    KEY.rt = KbName('3#');
+    KEY.rt_L = KbName('3#');
+    KEY.rt_R = KbName('6^');
 else
-    KEY.rt = KbName('SPACE');
+    KEY.rt_L = KbName('SPACE');
+    KEY.rt_R = KbName('SPACE');
 end
-KEY.trigger = KbName('''');  %This is an apostrophe...
+% KEY.trigger = KbName('''');  %This is an apostrophe for PC...
+KEY.trigger = KbName('''"');
 
 
 COLORS = struct;
@@ -79,13 +82,13 @@ COLORS.NO = [192 192 192]';     %color of no rectangle
 
 
 STIM = struct;
-STIM.blocks = 10;
-STIM.trials = 30;
+STIM.blocks = 8;
+STIM.trials = 40;
 STIM.gotrials = 140;
 STIM.notrials = 140;
 STIM.neutrials = 40;
 STIM.trialdur = 1.250;
-STIM.jitter = [1 2 3];
+%STIM.jitter = [1 2 3];   %This is now hardcoded at end of .m file...
 
 %% Keyboard stuff for fMRI...
 
@@ -110,6 +113,7 @@ end
 %% Find and load pics
 [mdir,~,~] = fileparts(which('Veling_SST.m'));
 imgdir = [mdir filesep 'MasterPics'];
+% imgdir = '/Users/canelab/Documents/StudyTasks/MasterPics';
 picratefolder = fullfile(mdir,'Ratings');
 
 if COND == 1;
@@ -129,10 +133,8 @@ if COND == 1;
         if randopics == 1
             cd(imgdir)
             p = struct;
-            p.PicRating.go = dir('Healthy*');
-            p.PicRating.no = dir('Unhealthy*');
-            %XXX: ADD RANDOMIZATION SO THAT SAME 80 IMAGES AREN'T CHOSEN
-            %EVERYTIME
+            p.PicRating.H = dir('Healthy*');
+            p.PicRating.U = dir('Unhealthy*');
         else
             error('Task cannot proceed without images. Contact Erik (elk@uoregon.edu) if you have continued problems.')
         end
@@ -145,12 +147,18 @@ cd(imgdir);
 
 PICS =struct;
 if COND == 1;                   %Condtion = 1 is food. 
-%     PICS.in.go = dir('good*.jpg');
-%     PICS.in.no = dir('*bad*.jpg');
-    %Choose top 80 most appetizing pics)
-    PICS.in.go = struct('name',{p.PicRating.go(1:80).name}');
-    PICS.in.no = struct('name',{p.PicRating.no(1:80).name}');
+    if randopics ==1;
+        %randomly select 60 pictures.
+        PICS.in.go = struct('name',{p.PicRating.H(randperm(60)).name}');
+        PICS.in.no = struct('name',{p.PicRating.U(randperm(60)).name}');
+        PICS.in.neut = dir('Water*');
+    else
+
+    %Choose the pre-selected random 60 from top 80 most appetizing pics)
+    PICS.in.go = struct('name',{p.PicRating.H([p.PicRating.H.chosen]==1).name}');
+    PICS.in.no = struct('name',{p.PicRating.U([p.PicRating.U.chosen]==1).name}');
     PICS.in.neut = dir('Water*');
+    end
     
 elseif COND == 2;               %Condition = 2 is not food (birds/flowers)
     PICS.in.go = dir('Bird*');
@@ -172,16 +180,16 @@ trial_types = [ones(STIM.gotrials,1); repmat(2,STIM.notrials,1); repmat(3,STIM.n
 gonogo = [ones(STIM.gotrials,1); zeros(STIM.notrials,1)];                         %1 = go; 0 = nogo;
 gonogoh20 = BalanceTrials(STIM.neutrials,1,[0 1]);     %For neutral, go & no go are randomized
 gonogo = [gonogo; gonogoh20];
-jitter = BalanceTrials(length(gonogo),1,[STIM.jitter]);
-jitter = jitter(1:length(gonogo));
+% jitter = BalanceTrials(length(gonogo),1,[STIM.jitter]);
+% jitter = jitter(1:length(gonogo));
 
 %Make long list of #s to represent each pic
 piclist = NaN(length(gonogo),1);
 
-trial_types = [trial_types gonogo piclist jitter];
+trial_types = [trial_types gonogo piclist]; %jitter];
 shuffled = trial_types(randperm(size(trial_types,1)),:);
-shuffled((shuffled(:,1)==1),3) = [randperm(80)'; randperm(80,STIM.gotrials-80)'];
-shuffled((shuffled(:,1)==2),3) = [randperm(80)'; randperm(80,STIM.notrials-80)'];
+shuffled((shuffled(:,1)==1),3) = [randperm(60)'; randperm(60)'; randperm(60,STIM.gotrials-120)'];
+shuffled((shuffled(:,1)==2),3) = [randperm(60)'; randperm(60)'; randperm(60,STIM.notrials-120)'];
 shuffled((shuffled(:,1)==3),3) = [randperm(20)'; randperm(20,STIM.neutrials-20)'];
 
 for g = 1:STIM.blocks;
@@ -190,14 +198,15 @@ for g = 1:STIM.blocks;
     SST.var.trial_type(1:STIM.trials,g) = shuffled(row:rend,1);
     SST.var.GoNoGo(1:STIM.trials,g) = shuffled(row:rend,2);
     SST.var.picnum(1:STIM.trials,g) = shuffled(row:rend,3);
-    SST.var.jitter(1:STIM.trials,g) = shuffled(row:rend,4);
+    %SST.var.jitter(1:STIM.trials,g) = shuffled(row:rend,4); %Now hardcoded at end of .m
     
 end
 
+    SST.var.jitter = HardCodeJitter();
 %%
 %check for repeat pics in a any block
-for tt = 1:3
-    for b = 1:10;
+for tt = 1:3    %For each trial type...
+    for b = 1:STIM.blocks;  %In each block...
         t = SST.var.trial_type(:,b) == tt;   %Check for trials of trial type t in block b
         t_l = length(find(t));              %Check how many trials there are of type t in block b
         clist = SST.var.picnum(t,b);            %Find all pic numbers for trial type t in block b
@@ -210,10 +219,10 @@ for tt = 1:3
                 rep_loc = find(clist == cc(v));   %And find the location(s) of that unique number
                 while length(rep_loc) > 1                          %If there multiple instances of that unqiue number...
                     for u = 2:length(rep_loc)                   %Go through each instance, starting with second.
-                        newnum  = randperm(80,1);               %Randomly choose new number.
+                        newnum  = randperm(60,1);               %Randomly choose new number.
                         newcheck = length(find(cc == newnum));  %Check if that new number has been used all ready.
                         while newcheck > 0                      %Trapped in while loop until newnum is unique
-                            newnum  = randperm(80,1);
+                            newnum  = randperm(60,1);
                             newcheck = length(find(cc == newnum));
                         end
                         clist(rep_loc(u)) = newnum; %insert new number into c array...which later be put back into SST structure
@@ -449,14 +458,14 @@ for block = 1:STIM.blocks;
             %TRIAL! 
             %Stop task & alert experimenter?
 %             tot_rt = sprintf('Block %d Average RT:\tUnable to calculate RT due to 0 correct trials.',block);
-            fullblocktext = sprintf('Number Correct:\t\t%d of %d\nPercent Correct:\t\t%4.1f%%\nAverage RT:\tUnable to calculate RT due to 0 correct trials.',length(find(totes_c)),tot_trial,corr_per_totes);            
+            fullblocktext = sprintf('Number Correct:     %d of %d\nPercent Correct:     %4.1f%%\nAverage RT:     Unable to calculate RT due to 0 correct trials.',length(find(totes_c)),tot_trial,corr_per_totes);            
         else
             tot_go = SST.var.GoNoGo == 1;
             totrts = SST.data.rt;
             totrts = totrts(totes_c & tot_go);
             avg_rt_tote = fix(mean(totrts)*1000);     %Display in units of milliseconds.
 %             tot_rt = sprintf('Average RT:\t\t\t%3d milliseconds',avg_rt_tote);
-            fullblocktext = sprintf('Number Correct:\t\t%d of %d\nPercent Correct:\t\t%4.1f%%\nAverage RT:\t\t\t%3d milliseconds',length(find(totes_c)),tot_trial,corr_per_totes,avg_rt_tote);
+            fullblocktext = sprintf('Number Correct:        %d of %d\nPercent Correct:        %4.1f%%\nAverage RT:        %3d milliseconds',length(find(totes_c)),tot_trial,corr_per_totes,avg_rt_tote);
         end
         
         DrawFormattedText(w,'Total Results','center',YCENTER,COLORS.WHITE);
@@ -541,7 +550,8 @@ global w STIM PICS COLORS SST KEY scan_sec
     while telap <= (STIM.trialdur - .1); 
         telap = GetSecs() - RT_start;
         [Down, ~, Code] = KbCheck(); %waits for space bar to be pressed
-        if Down == 1 && any(find(Code) == KEY.rt)
+        if Down == 1 && (any(find(Code) == KEY.rt_L) || any(find(Code)  == KEY.rt_R))
+            
             trial_rt = GetSecs() - RT_start;
             
 
@@ -607,3 +617,8 @@ global PICS SST w
 %end
 end
 
+function jitter = HardCodeJitter()
+
+jitter = [5,7,6,7,6,5,5,6;6,5,7,3,3,5,7,7;5,6,5,6,7,3,6,5;5,3,3,6,5,6,4,6;6,4,5,6,5,7,4,4;4,7,3,4,6,6,7,4;5,4,7,7,3,5,6,4;7,7,4,4,7,6,4,5;4,5,6,4,4,5,6,7;7,5,6,3,4,5,6,5;3,3,5,6,4,5,4,7;4,5,6,3,5,3,4,6;5,3,4,3,6,5,4,6;7,7,3,6,7,6,3,5;7,4,3,3,7,6,6,7;4,3,4,6,3,5,6,7;6,7,6,5,7,6,4,5;5,4,4,7,3,4,6,5;6,4,5,3,7,5,5,5;5,6,6,5,4,5,4,6;5,7,5,6,4,4,6,4;4,5,4,7,6,7,7,5;5,7,7,6,4,5,6,5;4,7,7,7,3,3,6,3;7,5,6,3,4,3,4,7;7,5,7,3,6,6,3,5;6,7,6,3,6,6,6,5;6,7,3,3,5,7,5,6;4,7,6,3,5,7,5,5;6,4,5,3,5,5,6,5;5,7,7,4,7,5,3,4;6,5,5,5,3,3,3,6;7,7,7,7,3,6,6,5;5,5,3,6,5,6,3,4;7,3,5,6,3,6,7,6;6,7,4,6,5,3,3,5;4,7,7,6,4,3,5,6;6,4,5,5,5,7,3,7;3,3,4,7,4,6,5,3;3,5,3,4,3,4,6,5];
+
+end
