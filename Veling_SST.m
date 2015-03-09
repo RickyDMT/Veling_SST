@@ -203,19 +203,19 @@ shuffled = trial_types(randperm(size(trial_types,1)),:);
 pic_div = fix(STIM.gotrials/60);
 pic_rem = rem(STIM.gotrials,60);
 
-gop = randperm(60)';
-nop = randperm(60)';
+gopi = randperm(60)';
+nopi = randperm(60)';
 if pic_div >= 2
     for div = 2:pic_div;
-        gop = [gop; randperm(60)'];
-        nop = [nop; randperm(60)'];
+        gopi = [gopi; randperm(60)'];
+        nopi = [nopi; randperm(60)'];
     end
 end
-gop = [gop; randperm(60,pic_rem)];
-nop = [nop; randperm(60,pic_rem)];
+gopi = [gopi; randperm(60,pic_rem)'];
+nopi = [nopi; randperm(60,pic_rem)'];
 
-shuffled((shuffled(:,1)==1),3) = gop;
-shuffled((shuffled(:,1)==2),3) = nop;
+shuffled((shuffled(:,1)==1),3) = gopi;
+shuffled((shuffled(:,1)==2),3) = nopi;
 
 % shuffled((shuffled(:,1)==1),3) = [randperm(60)'; randperm(60)'; randperm(60,STIM.gotrials-120)'];
 % shuffled((shuffled(:,1)==2),3) = [randperm(60)'; randperm(60)'; randperm(60,STIM.notrials-120)'];
