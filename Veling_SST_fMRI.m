@@ -1,4 +1,4 @@
-function Veling_SST(varargin)
+function Veling_SST_fMRI(varargin)
 % IF at BAKER, Blocks = ?, Trials = ?
 % IF at LCNI, Blocks = ?, Trials = ?
 % Developed by ELK based on Veling et al., 2014
@@ -119,11 +119,19 @@ end
 
 [mdir,~,~] = fileparts(which('Veling_SST.m'));
 % imgdir = [mdir filesep 'MasterPics'];
+
+%Setup for testing;
 imgdir = '/Users/canelab/Documents/StudyTasks/MasterPics';
-picratefolder = fullfile(mdir,'Ratings');   %Name of folder at ORI
+picratefolder = '/Users/canelab/Documents/StudyTasks/MasterPics/Saved_Pic_Ratings';
+
+%Setup for LCNI
+% imgdir = [mdir filesep 'Pics']; %LCNI
+% picratefolder = fullfile(mdir,'Ratings');   %Name of folder at LCNI
+
 % Setup for ORI...
 % [imgdir,~,~] = fileparts(which('MasterPics_PlaceHolder.m')); Setup for ORI
 % picratefolder = fullfile(mdir,'Saved_Pic_Ratings');   %Name of folder at ORI
+
 randopics = 0;
 
 if COND == 1;
@@ -171,11 +179,13 @@ if COND == 1;                   %Condtion = 1 is food.
     end
     
 elseif COND == 2;               %Condition = 2 is not food (birds/flowers)
-    go_pics = dir('Bird*');
-    no_pics = dir('Flower*');
-    PICS.in.go = struct('name',{go_pics(randperm(length(go_pics),60)).name});
-    PICS.in.no = struct('name',{no_pics(randperm(length(no_pics),60)).name});
-    PICS.in.neut = dir('Mam*');
+    %Pull in random images of food for control condition?
+    
+%     go_pics = dir('Bird*');
+%     no_pics = dir('Flower*');
+%     PICS.in.go = struct('name',{go_pics(randperm(length(go_pics),60)).name});
+%     PICS.in.no = struct('name',{no_pics(randperm(length(no_pics),60)).name});
+%     PICS.in.neut = dir('Mam*');
 end
 % picsfields = fieldnames(PICS.in);
 
@@ -232,6 +242,7 @@ for g = 1:STIM.blocks;
 end
 
     SST.var.jitter = HardCodeJitter();
+    SST.var.jitter = SST.var.jitter/10; %For testing!
 %%
 %check for repeat pics in a any block
 for tt = 1:3    %For each trial type...
@@ -346,7 +357,7 @@ Screen('Flip',w);
 WaitSecs(1);
 
 %% Instructions
-DrawFormattedText(w,'You will see pictures with either a blue or gray border around them.\n\nPlease the press the space bar as quickly & accurately as you can\nBUT only if you see a BLUE bar around the image.\n\nDo not press if you see a gray bar.\n\n\nPress any key to continue.','center','center',COLORS.WHITE,50,[],[],1.5);
+DrawFormattedText(w,'You will see pictures with either a blue or gray border around them.\n\nPlease press the button under your index finger as quickly & accurately as you can\nBUT only if you see a BLUE bar around the image.\n\nDo not press if you see a gray bar.\n\n\nPress any key to continue.','center','center',COLORS.WHITE,50,[],[],1.5);
 Screen('Flip',w);
 KbWait();
 
@@ -354,7 +365,7 @@ KbWait();
 if PRAC == 1;
 %Add 1 = practice sort of thing? Or practice is mandatory...
 
-DrawFormattedText(w,' First, let''s practice.\n\nPress any key to continue.','center','center',COLORS.WHITE);
+DrawFormattedText(w,' First, let''s practice.\n\nPress any key to continue.','center','center',COLORS.WHITE,65);
 Screen('Flip',w);
 KbWait([],2);
 
@@ -368,13 +379,13 @@ WaitSecs(.1);
 
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
 Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
-DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.','center',STIM.framerect(4)+20,COLORS.WHITE);
+DrawFormattedText(w,'In this trial, you would press the button under your index finger as quickly as you could since the frame is blue.','center',STIM.framerect(4)+10,COLORS.WHITE,65,[],[],1.25);
 Screen('Flip',w);
 WaitSecs(3);
 
 Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
-DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.\nPress the space bar to continue.','center',STIM.framerect(4)+20,COLORS.WHITE);
+DrawFormattedText(w,'In this trial, you would press the button under your index finger as quickly as you could since the frame is blue.\nPress the space bar to continue.','center',STIM.framerect(4)+10,COLORS.WHITE,65,[],[],1.25);
 Screen('Flip',w);
 KbWait([],2);
 
@@ -385,18 +396,97 @@ WaitSecs(.1);
 
 Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
-DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.','center',STIM.framerect(4)+20,COLORS.WHITE);
+DrawFormattedText(w,'In this trial, DO NOT press the button, since the frame is gray.','center',STIM.framerect(4)+10,COLORS.WHITE);
 Screen('Flip',w);
 WaitSecs(5);
 
 Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
-DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.\nPress enter to continue.','center',STIM.framerect(4)+20,COLORS.WHITE);
+DrawFormattedText(w,'In this trial, DO NOT press the button, since the frame is gray.\nPress any key to continue.','center',STIM.framerect(4)+10,COLORS.WHITE);
 Screen('Flip',w);
 KbWait([],2);
 
-end
 %Now let's run a few trials?
+DrawFormattedText(w,'Now let''s try some practice trials.\nPress any key to continue.','center','center',COLORS.WHITE);
+Screen('Flip',w);
+KbWait([],2);
+
+pracpics = dir('Bird*');
+prac_pic_nums = randperm(length(pracpics),20);
+prac_gonogo = BalanceTrials(length(prac_pic_nums),1,[1 0]);
+
+for jjj = 1:length(prac_pic_nums);
+    DrawFormattedText(w,'+','center','center',COLORS.WHITE);
+    Screen('Flip',w);
+    WaitSecs(.5);
+    
+    pracpic_t = imread(pracpics(prac_pic_nums(jjj)).name);
+    pracpic_out = Screen('MakeTexture',w,pracpic_t);
+    Screen('DrawTexture',w,pracpic_out,[],STIM.imgrect);
+    Screen('Flip',w);
+    
+    switch prac_gonogo(jjj)
+        case {1}
+            Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
+        case {0}
+            Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
+    end
+    
+    Screen('DrawTexture',w,pracpic_out,[],STIM.imgrect);
+    WaitSecs(.1);
+    RT_start = Screen('Flip',w);
+    telap = GetSecs() - RT_start;
+    correct = -999;
+    
+    while telap <= (STIM.trialdur - .1);
+        telap = GetSecs() - RT_start;
+        [Down, ~, Code] = KbCheck(); %waits for space bar to be pressed
+        if Down == 1 && (any(find(Code) == KEY.rt_L) || any(find(Code)  == KEY.rt_R))
+            
+%             trial_rt = GetSecs() - RT_start;
+            
+            
+            
+            if prac_gonogo(jjj) == 0;
+                %                 Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
+                
+                DrawFormattedText(w,'X','center','center',COLORS.RED);
+                Screen('Flip',w);
+                correct = 0;
+                WaitSecs(.5);
+            else
+                %                 Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
+                %                 DrawFormattedText(w,'+','center','center',COLORS.GREEN);
+                 correct = 1;
+            end
+            break;
+        end
+    end
+    
+    if correct == -999;
+        %         Screen('DrawTexture',w,PICS.out(trial).texture);
+        
+        if prac_gonogo(jjj) == 0;    %If NoGo & Correct no press, do nothing & move to inter-trial black screen
+            Screen('Flip',w);                   %'Flip in order to clear buffer; next 'flip' (in main script) flips to black screen.
+%             correct = 1;
+        else
+            %             Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
+            %             DrawFormattedText(w,'Please Click Faster','center','center',COLORS.RED);
+            DrawFormattedText(w,'X','center','center',COLORS.RED);
+            Screen('Flip',w);
+%             correct = 0;
+            WaitSecs(.5);
+        end
+%         trial_rt = -999;
+    end
+    
+end
+
+DrawFormattedText(w,'We will now move to the actual task.','center','center',COLORS.WHITE);
+Screen('Flip',w);
+WaitSecs(3);
+
+end
 
 %% Trigger
 
@@ -414,7 +504,7 @@ end
 for block = 1:STIM.blocks;
     %Load pics block by block.
     DrawPics4Block(block);
-    ibt = sprintf('Prepare for Block %d.\n\nPress enter to begin.',block);
+    ibt = sprintf('Prepare for Block %d.\n\nPress the index finger button to begin.',block);
     DrawFormattedText(w,ibt,'center','center',COLORS.WHITE);
     Screen('Flip',w);
     KbWait([],2);
@@ -525,10 +615,10 @@ end
 %get the parent directory, which is one level up from mfilesdir
 %[parentdir,~,~] =fileparts(mfilesdir);
 savedir = [mfilesdir filesep 'Results' filesep];
-savename = ['vSST_' num2str(ID) '-' num2str(SESS) '.mat'];
+savename = ['vfSST_' num2str(ID) '-' num2str(SESS) '.mat'];
 
 if exist(savename,'file')==2;
-    savename = ['SST' num2str(ID) sprintf('%s_%2.0f%02.0f',date,d(4),d(5)) '.mat'];
+    savename = ['vfSST' num2str(ID) sprintf('%s_%2.0f%02.0f',date,d(4),d(5)) '.mat'];
 end
     
 try
@@ -540,11 +630,11 @@ catch
         save([mfilesdir filesep savename],'SST');
     catch
         warning('STILL problems saving....Try right-clicking on "SST" and Save as...');
-        SST
+        save SST
     end
 end
 
-DrawFormattedText(w,'Thank you for participating\n in this part of the study!','center','center',COLORS.WHITE);
+DrawFormattedText(w,'Thank you for participating in this part of the study!\n\nThe assessor will be with you shortly','center','center',COLORS.WHITE,65);
 Screen('Flip', w);
 KbWait();
 
@@ -559,9 +649,7 @@ function [trial_rt, correct] = DoPicSST(trial,block,varargin)
 
 global w STIM PICS COLORS SST KEY scan_sec
 
-%while telap <= STIM.trialdur
     Screen('DrawTexture',w,PICS.out(trial).texture,[],STIM.imgrect);
-%     telap = toc(tstart);
     picon = Screen('Flip',w);
     
     switch SST.var.GoNoGo(trial,block)
@@ -621,13 +709,14 @@ global w STIM PICS COLORS SST KEY scan_sec
     SST.data.pic_onset(trial,block) = picon - scan_sec;
     SST.data.frame_onset(trial,block) = RT_start - scan_sec;
 
-%end
 end
 
 %%
 function DrawPics4Block(block,varargin)
 
-global PICS SST w
+global PICS SST w 
+
+
 
     for j = 1:length(SST.var.trial_type);
         pic = SST.var.picnum(j,block);
@@ -643,7 +732,7 @@ global PICS SST w
         end
         PICS.out(j).texture = Screen('MakeTexture',w,PICS.out(j).raw);
     end
-%end
+
 end
 
 function jitter = HardCodeJitter()
