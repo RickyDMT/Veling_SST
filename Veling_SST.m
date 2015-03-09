@@ -1,4 +1,6 @@
 function Veling_SST(varargin)
+% IF at BAKER, Blocks = ?, Trials = ?
+% IF at LCNI, Blocks = ?, Trials = ?
 % Developed by ELK based on Veling et al., 2014
 % Contact: elk@uoregon.edu
 % Download latest version at: github.com/RickyDMT/Veling_SST
@@ -82,8 +84,8 @@ COLORS.NO = [192 192 192]';     %color of no rectangle
 
 
 STIM = struct;
-STIM.blocks = 8;
-STIM.trials = 40;
+STIM.blocks = 10;
+STIM.trials = 32;
 STIM.gotrials = 140;
 STIM.notrials = 140;
 STIM.neutrials = 40;
@@ -116,8 +118,8 @@ end
 %which all .m files point to...
 
 [mdir,~,~] = fileparts(which('Veling_SST.m'));
-imgdir = [mdir filesep 'MasterPics'];
-% imgdir = '/Users/canelab/Documents/StudyTasks/MasterPics';
+% imgdir = [mdir filesep 'MasterPics'];
+imgdir = '/Users/canelab/Documents/StudyTasks/MasterPics';
 picratefolder = fullfile(mdir,'Ratings');   %Name of folder at ORI
 % Setup for ORI...
 % [imgdir,~,~] = fileparts(which('MasterPics_PlaceHolder.m')); Setup for ORI
@@ -169,8 +171,10 @@ if COND == 1;                   %Condtion = 1 is food.
     end
     
 elseif COND == 2;               %Condition = 2 is not food (birds/flowers)
-    PICS.in.go = dir('Bird*');
-    PICS.in.no = dir('Flowers*');
+    go_pics = dir('Bird*');
+    no_pics = dir('Flower*');
+    PICS.in.lo = struct('name',{go_pics(randperm(length(go_pics),60)).name});
+    PICS.in.hi = struct('name',{no_pics(randperm(length(no_pics),60)).name});
     PICS.in.neut = dir('Mam*');
 end
 % picsfields = fieldnames(PICS.in);
@@ -196,8 +200,25 @@ piclist = NaN(length(gonogo),1);
 
 trial_types = [trial_types gonogo piclist]; %jitter];
 shuffled = trial_types(randperm(size(trial_types,1)),:);
-shuffled((shuffled(:,1)==1),3) = [randperm(60)'; randperm(60)'; randperm(60,STIM.gotrials-120)'];
-shuffled((shuffled(:,1)==2),3) = [randperm(60)'; randperm(60)'; randperm(60,STIM.notrials-120)'];
+pic_div = fix(STIM.gotrials/60);
+pic_rem = rem(STIM.gotrials,60);
+
+gop = randperm(60)';
+nop = randperm(60)';
+if pic_div >= 2
+    for div = 2:pic_div;
+        gop = [gop; randperm(60)'];
+        nop = [nop; randperm(60)'];
+    end
+end
+gop = [gop; randperm(60,pic_rem)];
+nop = [nop; randperm(60,pic_rem)];
+
+shuffled((shuffled(:,1)==1),3) = gop;
+shuffled((shuffled(:,1)==2),3) = nop;
+
+% shuffled((shuffled(:,1)==1),3) = [randperm(60)'; randperm(60)'; randperm(60,STIM.gotrials-120)'];
+% shuffled((shuffled(:,1)==2),3) = [randperm(60)'; randperm(60)'; randperm(60,STIM.notrials-120)'];
 shuffled((shuffled(:,1)==3),3) = [randperm(20)'; randperm(20,STIM.neutrials-20)'];
 
 for g = 1:STIM.blocks;
