@@ -513,11 +513,7 @@ for block = 1:STIM.blocks;
 
     old = Screen('TextSize',w,100);
     for trial = 1:STIM.trials;
-%         %Jitter
-%             %Fixation?
-%             %DrawFormattedText(w,'+','center','center',COLORS.WHITE);
-%             %Screen('Flip',w);
-%         WaitSecs(SST.var.jitter);
+
         DrawFormattedText(w,'+','center','center',COLORS.WHITE);
         fixon = Screen('Flip',w);
         SST.data.fix_onset(trial,block) = fixon - scan_sec;
@@ -625,11 +621,11 @@ try
     save([savedir savename],'SST');
     
 catch
-    warning('Something is amiss with this save. Retrying to save in a more general location...');
     try
+        warning('Something is amiss with this save. Retrying to save in: %s\n',mfilesdir);
         save([mfilesdir filesep savename],'SST');
     catch
-        warning('STILL problems saving....Try right-clicking on "SST" and Save as...');
+        warning('STILL problems saving....Will attempt to save the entire workspace wherever the computer currently is: %s\n',pwd);
         save SST
     end
 end
