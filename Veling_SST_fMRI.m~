@@ -534,11 +534,11 @@ for block = 1:STIM.blocks;
     corr_per = length(find(c))*100/length(c);                           %Percent correct = length find(c) / total trials
     c_go = (c & SST.var.GoNoGo(:,block) == 1);
     
-    if ~any(c_go)
+    if isempty(c_go)
         %Don't try to calculate avg RT, they got them all wrong (WTF?)
         %Display "N/A" for this block's RT.
 %         ibt_rt = sprintf('Average RT:\tUnable to calculate RT due to 0 correct trials.');
-        fulltext = sprintf('Number Correct:        %d of %d\nPercent Correct:        %4.1f%%\nAverage RT (on Blue trials):        Unable to calculate due to 0 correct Blue trials.',length(find(c)),STIM.trials,corr_per);
+        fulltext = sprintf('Number Correct:        %d of %d\nPercent Correct:        %4.1f%%\nAverage RT (on Blue trials):        Unable to calculate due to 0 correct trials.',length(find(c)),STIM.trials,corr_per);
 
     else
 %         block_go = SST.var.GoNoGo(:,block) == 1;                        %Find go trials
@@ -546,7 +546,7 @@ for block = 1:STIM.blocks;
         blockrts = blockrts(c_go);                              %Resample RT only if go & correct.
         SST.data.avg_rt(block) = fix(mean(blockrts)*1000);                        %Display avg rt in milliseconds.
 %         ibt_rt = sprintf('Average RT:\t\t\t%3d milliseconds',SST.data.avg_rt(block));
-        fulltext = sprintf('Number Correct:        %d of %d\nPercent Correct:        %4.1f%%\nAverage RT (on Blue trials):            %3d milliseconds',length(find(c)),STIM.trials,corr_per,SST.data.avg_rt(block));
+        fulltext = sprintf('Number Correct:        %d of %d\nPercent Correct:        %4.1f%%\nAverage Rt (on Blue trials):            %3d milliseconds',length(find(c)),STIM.trials,corr_per,SST.data.avg_rt(block));
         
     end
     
@@ -563,11 +563,12 @@ for block = 1:STIM.blocks;
         corr_per_totes = length(find(totes_c))*100/tot_trial;
         tot_go_c = (totes_c & SST.var.GoNoGo == 1);
         
-        if ~any(tot_go_c)
+        if isempty(tot_go_c)
             %Don't try to calculate RT, they have missed EVERY SINGLE GO
             %TRIAL! 
-            fullblocktext = sprintf('Number Correct:     %d of %d\nPercent Correct:     %4.1f%%\nAverage RT (on Blue trials):     Unable to calculate RT due to 0 correct Blue trials.',length(find(totes_c)),tot_trial,corr_per_totes);            
+            fullblocktext = sprintf('Number Correct:     %d of %d\nPercent Correct:     %4.1f%%\nAverage RT (on Blue trials):     Unable to calculate RT due to 0 correct trials.',length(find(totes_c)),tot_trial,corr_per_totes);            
         else
+%             tot_go = SST.var.GoNoGo == 1;
             totrts = SST.data.rt;
             totrts = totrts(tot_go_c);
             avg_rt_tote = fix(mean(totrts)*1000);     %Display in units of milliseconds.
@@ -576,6 +577,10 @@ for block = 1:STIM.blocks;
         
         DrawFormattedText(w,'Total Results','center',YCENTER,COLORS.WHITE);
         DrawFormattedText(w,fullblocktext,ibt_xdim,YCENTER+40,COLORS.WHITE,[],[],[],1.5);
+%         DrawFormattedText(w,corr_count_totes,ibt_xdim,ibt_ydim+160,COLORS.WHITE);
+%         DrawFormattedText(w,corr_pert_totes,ibt_xdim,ibt_ydim+200,COLORS.WHITE);
+%         DrawFormattedText(w,tot_rt,ibt_xdim,ibt_ydim+210,COLORS.WHITE);
+        %Screen('Flip',w);
     end
 
     DrawFormattedText(w,'Press any key to continue.','center',wRect(4)*9/10,COLORS.WHITE);
