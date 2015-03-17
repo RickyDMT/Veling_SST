@@ -365,6 +365,7 @@ STIM.imgrect = STIM.framerect + [30; 30; -30; -30];
 %% Initial screen
 DrawFormattedText(w,'The stop signal task is about to begin.\nPress any key to continue.','center','center',COLORS.WHITE,50,[],[],1.5);
 Screen('Flip',w);
+FlushEvents();
 while 1
     [pracDown, ~, pracCode] = KbCheck(); %waits for R or L index button to be pressed
     if pracDown == 1 && any(pracCode(KEY.all))
@@ -387,6 +388,8 @@ while 1
     end
 end
 
+
+
 %% Practice
 if PRAC == 1;
 %Add 1 = practice sort of thing? Or practice is mandatory...
@@ -396,11 +399,13 @@ Screen('Flip',w);
 % KbWait([],2);
 FlushEvents();
 while 1
-    [pracDown, ~, pracCode] = KbCheck(); %waits for any button box button to be pressed
+    [pracDown, ~, pracCode] = KbCheck(); %waits for R or L index button to be pressed
     if pracDown == 1 && any(pracCode(KEY.all))
         break
     end
 end
+
+
 
 practpic = imread(getfield(PICS,'in','neut',{1},'name'));
 practpic = Screen('MakeTexture',w,practpic);
@@ -432,6 +437,8 @@ while 1
     end
 end
 
+
+
 %NO GO PRACTICE
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
 Screen('Flip',w);
@@ -448,6 +455,7 @@ Screen('DrawTexture',w,practpic,[],STIM.imgrect);
 DrawFormattedText(w,'In this trial, DO NOT press the button, since the frame is gray.','center',STIM.framerect(4)+10,COLORS.WHITE);
 DrawFormattedText(w,'Press the index finger button to continue.','center','center',COLORS.RED); 
 Screen('Flip',w);
+% KbWait([],2);
 FlushEvents();
 while 1
     [pracDown, ~, pracCode] = KbCheck(); %waits for R or L index button to be pressed
@@ -455,6 +463,7 @@ while 1
         break
     end
 end
+
 
 Screen('TextSize',w,oldtextsize);
 
@@ -469,6 +478,8 @@ while 1
         break
     end
 end
+
+
 
 pracpics = dir('Bird*');
 prac_pic_nums = randperm(length(pracpics),20);
@@ -566,7 +577,15 @@ for block = 1:STIM.blocks;
     ibt = sprintf('Prepare for Block %d.\n\nPress the index finger button to begin.',block);
     DrawFormattedText(w,ibt,'center','center',COLORS.WHITE);
     Screen('Flip',w);
-    KbWait([],2);
+%     KbWait([],2);
+FlushEvents();
+while 1
+    [pracDown, ~, pracCode] = KbCheck(); %waits for R or L index button to be pressed
+    if pracDown == 1 && any(pracCode(KEY.all))
+        break
+    end
+end
+
     Screen('Flip',w);
     WaitSecs(1);
 
@@ -636,10 +655,18 @@ for block = 1:STIM.blocks;
         DrawFormattedText(w,'Total Results','center',YCENTER,COLORS.WHITE);
         DrawFormattedText(w,fullblocktext,ibt_xdim,YCENTER+40,COLORS.WHITE,[],[],[],1.5);
     end
-
+    
     DrawFormattedText(w,'Press any key to continue.','center',wRect(4)*9/10,COLORS.WHITE);
     Screen('Flip',w);
-    KbWait();
+    %     KbWait();
+    FlushEvents();
+    while 1
+        [pracDown, ~, pracCode] = KbCheck(); %waits for R or L index button to be pressed
+        if pracDown == 1 && any(pracCode(KEY.all))
+            break
+        end
+    end
+    
     Screen('Flip',w);
     
     %XXX: Game like element
