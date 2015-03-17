@@ -28,8 +28,8 @@ function Veling_SST(varargin)
 
 global KEY COLORS w wRect XCENTER YCENTER PICS STIM SST trial scan_sec
 
-prompt={'SUBJECT ID' 'Condition (1 or 2)' 'Session (1, 2, or 3)' 'Practice? (1 = Y, 0 = N)' 'fMRI? (1 = Y, 0 = N)'};
-defAns={'4444' '1' '1' '0' '1'};
+prompt={'SUBJECT ID' 'Condition (1 or 2)' 'Session (1, 2, 3, or 4)' 'Practice? (1 = Y, 0 = N)' 'fMRI? (1 = Y, 0 = N)'};
+defAns={'4444' '1' '1' '0' '0'};
 
 answer=inputdlg(prompt,'Please input subject info',1,defAns);
 
@@ -56,8 +56,8 @@ if exist(file_check,'file') == 2;
     error('File already exists. Please double-check and/or re-enter participant data.');
 end
 
-
-rng(ID); %Seed random number generator with subject ID
+rng_num = ID*SESS;
+rng(rng_num); %Seed random number generator with subject ID
 d = clock;
 
 KEY = struct;
@@ -68,8 +68,8 @@ else
     KEY.rt_L = KbName('SPACE');
     KEY.rt_R = KbName('SPACE');
 end
-% KEY.trigger = KbName('''');  %This is an apostrophe for PC...
-KEY.trigger = KbName('''"');
+KEY.trigger = KbName('''');  %This is an apostrophe for PC...
+% KEY.trigger = KbName('''"');
 
 
 COLORS = struct;
@@ -84,8 +84,8 @@ COLORS.NO = [192 192 192]';     %color of no rectangle
 
 
 STIM = struct;
-STIM.blocks = 8;
-STIM.trials = 40;
+STIM.blocks = 10;
+STIM.trials = 32;
 STIM.gotrials = 140;
 STIM.notrials = 140;
 STIM.neutrials = 40;
@@ -117,10 +117,10 @@ end
 %that contains Veling_SST.m.  At ORI, there is a separate MasterPics folder
 %which all .m files point to...
 
-[mdir,~,~] = fileparts(which('Veling_SST.m'));
-% imgdir = [mdir filesep 'MasterPics'];
-imgdir = '/Users/canelab/Documents/StudyTasks/MasterPics';
-picratefolder = fullfile(mdir,'Ratings');   %Name of folder at ORI
+% [mdir,~,~] = fileparts(which('Veling_SST.m'));
+[imgdir,~,~] = fileparts(which('MasterPics_PlaceHolder.m'));
+picratefolder = fullfile(imgdir,'Saved_Pic_Ratings');% imgdir = '/Users/canelab/Documents/StudyTasks/MasterPics';
+% picratefolder = fullfile(mdir,'Ratings');   %Name of folder at ORI
 % Setup for ORI...
 % [imgdir,~,~] = fileparts(which('MasterPics_PlaceHolder.m')); Setup for ORI
 % picratefolder = fullfile(mdir,'Saved_Pic_Ratings');   %Name of folder at ORI
@@ -216,7 +216,6 @@ nopi = [nopi; randperm(60,pic_rem)'];
 
 shuffled((shuffled(:,1)==1),3) = gopi;
 shuffled((shuffled(:,1)==2),3) = nopi;
-
 % shuffled((shuffled(:,1)==1),3) = [randperm(60)'; randperm(60)'; randperm(60,STIM.gotrials-120)'];
 % shuffled((shuffled(:,1)==2),3) = [randperm(60)'; randperm(60)'; randperm(60,STIM.notrials-120)'];
 shuffled((shuffled(:,1)==3),3) = [randperm(20)'; randperm(20,STIM.neutrials-20)'];
@@ -231,7 +230,8 @@ for g = 1:STIM.blocks;
     
 end
 
-    SST.var.jitter = HardCodeJitter();
+    SST.var.jitter = repmat(.5,STIM.trials,STIM.blocks);
+%     SST.var.jitter = HardCodeJitter();
 %%
 %check for repeat pics in a any block
 for tt = 1:3    %For each trial type...
@@ -278,9 +278,9 @@ end
     SST.data.rt = zeros(STIM.trials, STIM.blocks);
     SST.data.correct = zeros(STIM.trials, STIM.blocks)-999;
     SST.data.avg_rt = zeros(STIM.blocks,1);
-    SST.data.fix_onset = NaN(STIM.trials, STIM.blocks);
-    SST.data.pic_onset = NaN(STIM.trials, STIM.blocks);
-    SST.data.frame_onset = NaN(STIM.trials, STIM.blocks);
+%     SST.data.fix_onset = NaN(STIM.trials, STIM.blocks);
+%     SST.data.pic_onset = NaN(STIM.trials, STIM.blocks);
+%     SST.data.frame_onset = NaN(STIM.trials, STIM.blocks);
     SST.data.info.ID = ID;
     SST.data.info.cond = COND;               %Condtion 1 = Food; Condition 2 = animals
     SST.data.info.session = SESS;
@@ -368,13 +368,13 @@ WaitSecs(.1);
 
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
 Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
-DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.','center',STIM.framerect(4)+20,COLORS.WHITE);
+DrawFormattedText(w,'In this trial, press the space bar since the frame is blue.','center',STIM.framerect(4)+10,COLORS.WHITE,65);
 Screen('Flip',w);
 WaitSecs(3);
 
 Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
-DrawFormattedText(w,'In this trial, you would press the space bar as quickly as you could since the frame is blue.\nPress the space bar to continue.','center',STIM.framerect(4)+20,COLORS.WHITE);
+DrawFormattedText(w,'In this trial, press the space bar since the frame is blue. \nPress the space bar to continue.','center',STIM.framerect(4)+10,COLORS.WHITE,65);
 Screen('Flip',w);
 KbWait([],2);
 
@@ -385,15 +385,16 @@ WaitSecs(.1);
 
 Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
-DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.','center',STIM.framerect(4)+20,COLORS.WHITE);
+DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.','center',STIM.framerect(4)+10,COLORS.WHITE,70);
 Screen('Flip',w);
 WaitSecs(5);
 
 Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
-DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.\nPress enter to continue.','center',STIM.framerect(4)+20,COLORS.WHITE);
+DrawFormattedText(w,'In this trial, DO NOT press the space bar, since the frame is gray.\nPress enter to continue.','center',STIM.framerect(4)+10,COLORS.WHITE,70);
 Screen('Flip',w);
 KbWait([],2);
+Screen('Flip',w);
 
 end
 %Now let's run a few trials?

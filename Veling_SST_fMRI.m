@@ -28,7 +28,7 @@ function Veling_SST_fMRI(varargin)
 
 global KEY COLORS w wRect XCENTER YCENTER PICS STIM SST trial scan_sec
 
-prompt={'SUBJECT ID' 'Condition (1 or 2)' 'Session (1, 2, or 3)' 'Practice? (1 = Y, 0 = N)' 'fMRI? (1 = Y, 0 = N)'};
+prompt={'SUBJECT ID' 'Condition (1 or 2)' 'Session (1, 2, 3, or 4)' 'Practice? (1 = Y, 0 = N)' 'fMRI? (1 = Y, 0 = N)'};
 defAns={'4444' '1' '1' '0' '1'};
 
 answer=inputdlg(prompt,'Please input subject info',1,defAns);
@@ -61,6 +61,19 @@ rng(ID); %Seed random number generator with subject ID
 d = clock;
 
 KEY = struct;
+KEY.ONE= KbName('1!');
+KEY.TWO= KbName('2@');
+KEY.THREE= KbName('3#');
+KEY.FOUR= KbName('4$');
+KEY.FIVE= KbName('5%');
+KEY.SIX= KbName('6^');
+KEY.SEVEN= KbName('7&');
+KEY.EIGHT= KbName('8*');
+KEY.NINE= KbName('9(');
+KEY.TEN= KbName('0)');
+rangetest = cell2mat(struct2cell(KEY));
+KEY.all = min(rangetest):max(rangetest);
+
 if fmri == 1;
     KEY.rt_L = KbName('3#');
     KEY.rt_R = KbName('6^');
@@ -68,8 +81,8 @@ else
     KEY.rt_L = KbName('SPACE');
     KEY.rt_R = KbName('SPACE');
 end
-% KEY.trigger = KbName('''');  %This is an apostrophe for PC...
-KEY.trigger = KbName('''"');
+KEY.trigger = KbName('''');  %This is an apostrophe for PC...
+% KEY.trigger = KbName('''"');
 
 
 COLORS = struct;
@@ -117,16 +130,16 @@ end
 %that contains Veling_SST.m.  At ORI, there is a separate MasterPics folder
 %which all .m files point to...
 
-[mdir,~,~] = fileparts(which('Veling_SST.m'));
+[mdir,~,~] = fileparts(which('Veling_SST_fMRI.m'));
 % imgdir = [mdir filesep 'MasterPics'];
 
 %Setup for testing;
-imgdir = '/Users/canelab/Documents/StudyTasks/MasterPics';
-picratefolder = '/Users/canelab/Documents/StudyTasks/MasterPics/Saved_Pic_Ratings';
+% imgdir = '/Users/canelab/Documents/StudyTasks/MasterPics';
+% picratefolder = '/Users/canelab/Documents/StudyTasks/MasterPics/Saved_Pic_Ratings';
 
 %Setup for LCNI
-% imgdir = [mdir filesep 'Pics']; %LCNI
-% picratefolder = fullfile(mdir,'Ratings');   %Name of folder at LCNI
+imgdir = [mdir filesep 'MasterPics']; %LCNI
+picratefolder = fullfile(mdir,'Ratings');   %Name of folder at LCNI
 
 % Setup for ORI...
 % [imgdir,~,~] = fileparts(which('MasterPics_PlaceHolder.m')); Setup for ORI
@@ -181,11 +194,11 @@ if COND == 1;                   %Condtion = 1 is food.
 elseif COND == 2;               %Condition = 2 is not food (birds/flowers)
     %Pull in random images of food for control condition?
     
-%     go_pics = dir('Bird*');
-%     no_pics = dir('Flower*');
-%     PICS.in.go = struct('name',{go_pics(randperm(length(go_pics),60)).name});
-%     PICS.in.no = struct('name',{no_pics(randperm(length(no_pics),60)).name});
-%     PICS.in.neut = dir('Mam*');
+    go_pics = dir('Bird*');
+    no_pics = dir('Flower*');
+    PICS.in.go = struct('name',{go_pics(randperm(length(go_pics),60)).name});
+    PICS.in.no = struct('name',{no_pics(randperm(length(no_pics),60)).name});
+    PICS.in.neut = dir('Mam*');
 end
 % picsfields = fieldnames(PICS.in);
 
@@ -352,14 +365,27 @@ STIM.imgrect = STIM.framerect + [30; 30; -30; -30];
 %% Initial screen
 DrawFormattedText(w,'The stop signal task is about to begin.\nPress any key to continue.','center','center',COLORS.WHITE,50,[],[],1.5);
 Screen('Flip',w);
-KbWait();
+while 1
+    [pracDown, ~, pracCode] = KbCheck(); %waits for R or L index button to be pressed
+    if pracDown == 1 && any(pracCode(KEY.all))
+        break
+    end
+end
+
 Screen('Flip',w);
 WaitSecs(1);
 
 %% Instructions
 DrawFormattedText(w,'You will see pictures with either a blue or gray border around them.\n\nPlease press the button under your index finger as quickly & accurately as you can\nBUT only if you see a BLUE bar around the image.\n\nDo not press if you see a gray bar.\n\n\nPress any key to continue.','center','center',COLORS.WHITE,50,[],[],1.5);
 Screen('Flip',w);
-KbWait();
+% KbWait();
+FlushEvents();
+while 1
+    [pracDown, ~, pracCode] = KbCheck(); %waits for R or L index button to be pressed
+    if pracDown == 1 && any(pracCode(KEY.all))
+        break
+    end
+end
 
 %% Practice
 if PRAC == 1;
@@ -367,10 +393,19 @@ if PRAC == 1;
 
 DrawFormattedText(w,' First, let''s practice.\n\nPress any key to continue.','center','center',COLORS.WHITE,65);
 Screen('Flip',w);
-KbWait([],2);
+% KbWait([],2);
+FlushEvents();
+while 1
+    [pracDown, ~, pracCode] = KbCheck(); %waits for any button box button to be pressed
+    if pracDown == 1 && any(pracCode(KEY.all))
+        break
+    end
+end
 
 practpic = imread(getfield(PICS,'in','neut',{1},'name'));
 practpic = Screen('MakeTexture',w,practpic);
+
+oldtextsize = Screen('TextSize',w,20);
 
 %GO PRACTICE
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
@@ -379,15 +414,23 @@ WaitSecs(.1);
 
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
 Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
-DrawFormattedText(w,'In this trial, you would press the button under your index finger as quickly as you could since the frame is blue.','center',STIM.framerect(4)+10,COLORS.WHITE,65,[],[],1.25);
+DrawFormattedText(w,'In this trial, press the button under your index finger since the frame is blue.','center',STIM.framerect(4)+1,COLORS.WHITE,70,[],[],1.25);
 Screen('Flip',w);
 WaitSecs(3);
 
 Screen('FrameRect',w,COLORS.GO,STIM.framerect,20);
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
-DrawFormattedText(w,'In this trial, you would press the button under your index finger as quickly as you could since the frame is blue.\nPress the space bar to continue.','center',STIM.framerect(4)+10,COLORS.WHITE,65,[],[],1.25);
+DrawFormattedText(w,'In this trial, press the button under your index finger since the frame is blue.','center',STIM.framerect(4)+1,COLORS.WHITE,70,[],[],1.25);
+DrawFormattedText(w,'Press the index finger button to continue.','center','center',COLORS.RED); 
 Screen('Flip',w);
-KbWait([],2);
+% KbWait([],2);
+FlushEvents();
+while 1
+    [pracDown, ~, pracCode] = KbCheck(); %waits for R or L index button to be pressed
+    if pracDown == 1 && any(pracCode(KEY.all))
+        break
+    end
+end
 
 %NO GO PRACTICE
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
@@ -402,14 +445,30 @@ WaitSecs(5);
 
 Screen('FrameRect',w,COLORS.NO,STIM.framerect,20);
 Screen('DrawTexture',w,practpic,[],STIM.imgrect);
-DrawFormattedText(w,'In this trial, DO NOT press the button, since the frame is gray.\nPress any key to continue.','center',STIM.framerect(4)+10,COLORS.WHITE);
+DrawFormattedText(w,'In this trial, DO NOT press the button, since the frame is gray.','center',STIM.framerect(4)+10,COLORS.WHITE);
+DrawFormattedText(w,'Press the index finger button to continue.','center','center',COLORS.RED); 
 Screen('Flip',w);
-KbWait([],2);
+FlushEvents();
+while 1
+    [pracDown, ~, pracCode] = KbCheck(); %waits for R or L index button to be pressed
+    if pracDown == 1 && any(pracCode(KEY.all))
+        break
+    end
+end
+
+Screen('TextSize',w,oldtextsize);
 
 %Now let's run a few trials?
 DrawFormattedText(w,'Now let''s try some practice trials.\nPress any key to continue.','center','center',COLORS.WHITE);
 Screen('Flip',w);
-KbWait([],2);
+% KbWait([],2);
+FlushEvents();
+while 1
+    [pracDown, ~, pracCode] = KbCheck(); %waits for R or L index button to be pressed
+    if pracDown == 1 && any(pracCode(KEY.all))
+        break
+    end
+end
 
 pracpics = dir('Bird*');
 prac_pic_nums = randperm(length(pracpics),20);
@@ -593,11 +652,11 @@ end
 
 %Export SST to text and save with subject number.
 %find the mfilesdir by figuring out where Veling_SST.m is kept
-[mfilesdir,~,~] = fileparts(which('Veling_SST.m'));
+% [mfilesdir,~,~] = fileparts(which('Veling_SST.m'));
 
 %get the parent directory, which is one level up from mfilesdir
 %[parentdir,~,~] =fileparts(mfilesdir);
-savedir = [mfilesdir filesep 'Results' filesep];
+savedir = [mdir filesep 'Results' filesep];
 savename = ['vfSST_' num2str(ID) '-' num2str(SESS) '.mat'];
 
 if exist(savename,'file')==2;
@@ -610,7 +669,7 @@ try
 catch
     try
         warning('Something is amiss with this save. Retrying to save in: %s\n',mfilesdir);
-        save([mfilesdir filesep savename],'SST');
+        save([mdir filesep savename],'SST');
     catch
         warning('STILL problems saving....Will attempt to save the entire workspace wherever the computer currently is: %s\n',pwd);
         save SST
