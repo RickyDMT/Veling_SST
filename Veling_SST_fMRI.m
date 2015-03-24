@@ -72,7 +72,7 @@ KEY.EIGHT= KbName('8*');
 KEY.NINE= KbName('9(');
 KEY.TEN= KbName('0)');
 rangetest = cell2mat(struct2cell(KEY));
-KEY.all = min(rangetest):max(rangetest);
+KEY.all = rangetest;
 
 if fmri == 1;
     KEY.rt_L = KbName('3#');
@@ -255,10 +255,10 @@ for g = 1:STIM.blocks;
 end
 
     SST.var.jitter = HardCodeJitter();
-    SST.var.jitter = SST.var.jitter/10; %For testing!
+%     SST.var.jitter = SST.var.jitter/10; %For testing!
 %%
 %check for repeat pics in a any block
-for tt = 1:3    %For each trial type...
+for tt = 1:2    %For each trial type...
     for b = 1:STIM.blocks;  %In each block...
         t = SST.var.trial_type(:,b) == tt;   %Check for trials of trial type t in block b
         t_l = length(find(t));              %Check how many trials there are of type t in block b
