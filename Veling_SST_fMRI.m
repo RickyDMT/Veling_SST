@@ -39,6 +39,8 @@ SESS = str2double(answer{3});
 PRAC = str2double(answer{4});
 fmri = str2double(answer{5});
 
+fprintf('This is version 1.2: Faster jitter & no key presses for feedback screens.\n\n\n');
+
 file_check = sprintf('SST_%d-%d.mat',ID,SESS);
 
 %Make sure input data makes sense.
@@ -98,11 +100,12 @@ COLORS.NO = [192 192 192]';     %color of no rectangle
 
 STIM = struct;
 STIM.blocks = 8;
-STIM.trials = 40;
-STIM.gotrials = 140;
-STIM.notrials = 140;
+STIM.trials = 35;
+STIM.gotrials = 120;
+STIM.notrials = 120;
 STIM.neutrials = 40;
 STIM.trialdur = 1.250;
+STIM.resultdur = 3; %CHANGE THIS LINE FOR FASTER/SLOWER RESULTS SCREEN
 %STIM.jitter = [1 2 3];   %This is now hardcoded at end of .m file...
 
 %% Keyboard stuff for fMRI...
@@ -240,8 +243,6 @@ nopi = [nopi; randperm(60,pic_rem)'];
 shuffled((shuffled(:,1)==1),3) = gopi;
 shuffled((shuffled(:,1)==2),3) = nopi;
 
-% shuffled((shuffled(:,1)==1),3) = [randperm(60)'; randperm(60)'; randperm(60,STIM.gotrials-120)'];
-% shuffled((shuffled(:,1)==2),3) = [randperm(60)'; randperm(60)'; randperm(60,STIM.notrials-120)'];
 shuffled((shuffled(:,1)==3),3) = [randperm(20)'; randperm(20,STIM.neutrials-20)'];
 
 for g = 1:STIM.blocks;
@@ -656,22 +657,21 @@ end
         DrawFormattedText(w,fullblocktext,ibt_xdim,YCENTER+40,COLORS.WHITE,[],[],[],1.5);
     end
     
-    DrawFormattedText(w,'Press any key to continue.','center',wRect(4)*9/10,COLORS.WHITE);
+%     DrawFormattedText(w,'Press any key to continue.','center',wRect(4)*9/10,COLORS.WHITE);
     Screen('Flip',w);
+    WaitSecs(STIM.resultdur);
+
     %     KbWait();
-    FlushEvents();
-    while 1
-        [pracDown, ~, pracCode] = KbCheck(); %waits for R or L index button to be pressed
-        if pracDown == 1 && any(pracCode(KEY.all))
-            break
-        end
-    end
+%     FlushEvents();
+%     while 1
+%         [pracDown, ~, pracCode] = KbCheck(); %waits for R or L index button to be pressed
+%         if pracDown == 1 && any(pracCode(KEY.all))
+%             break
+%         end
+%     end
     
     Screen('Flip',w);
     
-    %XXX: Game like element
-    %XXX: Make it engaging.
-        
     
 end
 
@@ -806,6 +806,6 @@ end
 
 function jitter = HardCodeJitter()
 
-jitter = [5,7,6,7,6,5,5,6;6,5,7,3,3,5,7,7;5,6,5,6,7,3,6,5;5,3,3,6,5,6,4,6;6,4,5,6,5,7,4,4;4,7,3,4,6,6,7,4;5,4,7,7,3,5,6,4;7,7,4,4,7,6,4,5;4,5,6,4,4,5,6,7;7,5,6,3,4,5,6,5;3,3,5,6,4,5,4,7;4,5,6,3,5,3,4,6;5,3,4,3,6,5,4,6;7,7,3,6,7,6,3,5;7,4,3,3,7,6,6,7;4,3,4,6,3,5,6,7;6,7,6,5,7,6,4,5;5,4,4,7,3,4,6,5;6,4,5,3,7,5,5,5;5,6,6,5,4,5,4,6;5,7,5,6,4,4,6,4;4,5,4,7,6,7,7,5;5,7,7,6,4,5,6,5;4,7,7,7,3,3,6,3;7,5,6,3,4,3,4,7;7,5,7,3,6,6,3,5;6,7,6,3,6,6,6,5;6,7,3,3,5,7,5,6;4,7,6,3,5,7,5,5;6,4,5,3,5,5,6,5;5,7,7,4,7,5,3,4;6,5,5,5,3,3,3,6;7,7,7,7,3,6,6,5;5,5,3,6,5,6,3,4;7,3,5,6,3,6,7,6;6,7,4,6,5,3,3,5;4,7,7,6,4,3,5,6;6,4,5,5,5,7,3,7;3,3,4,7,4,6,5,3;3,5,3,4,3,4,6,5];
+jitter = [4,5,5,2,2,3,3,2;4,2,5,5,2,5,5,2;2,5,3,3,2,3,3,5;5,4,4,5,2,2,3,5;3,4,4,2,4,5,3,4;2,3,2,2,2,2,5,3;2,3,5,2,5,4,4,2;3,2,4,3,2,4,2,5;3,2,4,4,5,3,3,5;4,3,4,5,5,5,5,4;2,2,3,4,2,4,4,3;5,4,2,3,4,3,2,3;2,3,3,4,5,5,3,2;2,3,3,3,3,5,5,2;2,2,5,2,3,4,2,3;5,4,3,2,3,2,4,4;4,3,4,4,5,3,5,4;3,3,3,5,5,2,2,2;2,4,5,5,5,2,5,5;2,5,2,5,4,5,5,5;4,5,4,4,2,5,4,2;4,2,3,2,3,3,4,4;5,4,4,4,4,3,5,4;3,5,5,5,2,4,5,2;2,4,5,3,5,3,4,4;3,3,5,4,3,5,4,3;5,4,5,4,3,4,4,5;2,2,3,3,5,4,2,2;3,4,2,2,3,4,2,2;5,5,3,4,3,4,2,3;5,4,3,4,3,2,2,3;4,3,4,5,4,4,3,2;3,4,2,2,4,5,2,2;3,5,5,3,4,5,3,5;2,3,5,5,2,4,3,3];
 
 end
